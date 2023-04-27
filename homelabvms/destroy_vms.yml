@@ -1,0 +1,20 @@
+---
+- name: Destroy VMs
+  hosts:
+    - hyperdrive
+  gather_facts: no
+  tasks:
+    - name: Importeer vm vars
+      include_vars:
+        file: "homelabvms.yml"
+
+    - name: list vms
+      debug: msg="[hyperdrive] vm list is  {{ item.name }}"
+      with_items: "{{ vms }}"
+
+    - name: Delete VM
+      win_hyperv_guest:
+        name: "{{ item.name }}"
+        hostserver: hyperdrive
+        state: absent
+      with_items: "{{ vms }}"

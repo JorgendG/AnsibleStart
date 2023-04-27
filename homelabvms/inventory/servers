@@ -1,0 +1,11 @@
+
+[hypervisor]
+hyperdrive ansible_host=hyperdrive
+nuc12 ansible_host=192.168.1.186 ansible_user=hypervadmin
+
+[wdsserver]
+wds01 ansible_host=wds01
+
+[multi:children]
+hypervisor
+wdsserver

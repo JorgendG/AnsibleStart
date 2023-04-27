@@ -1,0 +1,7 @@
+[citrix_adc]
+192.168.1.40
+
+[citrix_adc:vars]
+nitro_user=nsroot
+nitro_nsip=192.168.1.40
+nsip=192.168.1.40

@@ -1,0 +1,7 @@
+[citrix_adc]
+192.168.1.30
+
+[citrix_adc:vars]
+nitro_user=nsroot
+nitro_nsip=ns30.homelabdc22.local
+validate_certs=no
