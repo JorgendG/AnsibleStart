@@ -1,13 +1,11 @@
 ---
-- name: Create VM
+- name: Create homelab VMs
   hosts:
     - hypervisor
   gather_facts: no
+  vars_files:
+    - vars/homelabvms.yml
   tasks:
-    - name: Importeer vm vars
-      include_vars:
-        file: "homelabvms.yml"
-
     - name: list vms
       debug: msg="[{{ inventory_hostname }}] vm list is  {{ item.name }}"
       with_items: "{{ vms }}"
@@ -22,42 +20,27 @@
         network_switch: External
         cpu: "{{ item.cpu }}"
         state: present
-      register: macadres
+      register: vmcreated
       with_items: "{{ vms }}"
       when: item.vmhost == inventory_hostname
 
-    - name: debug macadres
-      debug: msg="[macadres] is {{ item.changed }}"
-      with_items: "{{ macadres.results }}"
-# - name: Create WDS Registration
-#   hosts:
-#     - wds01
-#   gather_facts: no
-#   tasks:
-#     - name: Importeer vm vars
-#       include_vars:
-#         file: "homelabvms.yml"
+    - name: debug vmcreated
+      debug: msg="[vmcreated] is {{ item.changed }}"
+      with_items: "{{ vmcreated.results }}"
 
-#     - name: debug vms
-#       debug: msg="[vms] is {{ item.name }}"
-#       with_items: "{{ vms }}"
+    - name: WDS Registration
+      delegate_to: wds01
+      win_wds_reservation:
+        name: "{{ item.vmname }}"
+        macaddress: "{{ item.macaddress }}"
+        unattend: "{{ item.item.unattend }}"
+        state: present
+      with_items: "{{ hostvars[inventory_hostname]['vmcreated']['results'] }}"
+      when: item.changed == true
 
-#     - name: WDS Registration
-#       win_wds_reservation:
-#         name: "{{ item.vmname }}"
-#         macaddress: "{{ item.macaddress }}"
-#         unattend: "{{ item.item.unattend }}"
-#         state: present
-#       with_items: "{{ hostvars['hyperdrive']['macadres']['results'] }}"
-#       when: item.changed == true
-
-# - name: Start VM
-#   hosts:
-#     - hyperdrive
-#   gather_facts: no
-#   tasks:
-#     - name: Start VM
-#       win_hyperv_guest:
-#         name: "{{ item.vmname }}"
-#         state: started
-#       with_items: "{{ hostvars['hyperdrive']['macadres']['results'] }}"
+    - name: Start VM
+      win_hyperv_guest:
+        name: "{{ item.name }}"
+        state: started
+      with_items: "{{ vms }}"
+      when: item.vmhost == inventory_hostname
