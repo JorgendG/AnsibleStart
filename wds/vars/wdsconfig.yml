@@ -1,0 +1,40 @@
+images:
+  - name: boot
+    source: '\\hyperdrive\public\wim\boot.wim'
+    dest: 'c:\wdsimages\boot.wim'
+    ImageName: 'Microsoft Windows Setup (x64)'
+
+  - name: Server2022
+    source: '\\hyperdrive\public\wim\install2022.wim'
+    dest: 'c:\wdsimages\install2022.wim'
+    ImageName: 'Windows Server 2022 SERVERSTANDARD'
+    GroupName: 'Windows Server 2022'
+    Unattendfile: 'install2022.xml'
+
+  - name: Server2019
+    source: '\\hyperdrive\public\wim\install2019.wim'
+    dest: 'c:\wdsimages\install2019.wim'
+    ImageName: 'Windows Server 2019 SERVERSTANDARD'
+    GroupName: 'Windows Server 2019'
+    Unattendfile: 'install2019.xml'
+
+  - name: Server2016
+    source: '\\hyperdrive\public\wim\install2016.wim'
+    dest: 'c:\wdsimages\install2016.wim'
+    ImageName: 'Windows Server 2016 SERVERSTANDARD'
+    GroupName: 'Windows Server 2016'
+    Unattendfile: 'install2016.xml'
+
+  - name: Windows10
+    source: '\\hyperdrive\public\wim\installw10_19h2.wim'
+    dest: 'c:\wdsimages\installw10_19h2.wim'
+    ImageName: 'Windows 10 Enterprise Evaluation'
+    GroupName: 'Windows 10'
+    Unattendfile: 'installwin10.xml'
+
+  - name: Windows11
+    source: '\\hyperdrive\public\wim\installw11.wim'
+    dest: 'c:\wdsimages\installw11.wim'
+    ImageName: 'Windows 10 Enterprise'
+    GroupName: 'Windows 11'
+    Unattendfile: 'installwin11.xml'

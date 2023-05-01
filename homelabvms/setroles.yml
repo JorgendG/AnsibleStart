@@ -1,0 +1,35 @@
+---
+- name: Set roles homelab VMs
+  hosts:
+    - hypervisor
+  gather_facts: no
+  vars_files:
+    - vars/homelabvms.yml
+  tasks:
+    - name: list vms
+      debug: msg="[{{ inventory_hostname }}] vm list is {{ item.name }}"
+      with_items: "{{ vms }}"
+      when: item.vmhost == inventory_hostname
+
+    - name: add host vms
+      add_host:
+        name: "{{ item.name }}"
+      with_items: "{{ vms }}"
+      when: item.vmhost == inventory_hostname
+
+    - name: ping VM
+      ansible.windows.win_ping:
+      delegate_to: "{{ item.name }}"
+      with_items: "{{ vms }}"
+      when: item.vmhost == inventory_hostname
+
+    - name: join domain
+      win_domain_membership:
+        dns_domain_name: homelabdc22.local
+        domain_admin_user: administrator@homelabdc22.local
+        domain_admin_password: "{{ ansible_password }}"
+        state: domain
+      register: domain_state
+      delegate_to: "{{ item.name }}"
+      with_items: "{{ vms }}"
+      when: item.vmhost == inventory_hostname

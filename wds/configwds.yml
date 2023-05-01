@@ -1,0 +1,40 @@
+---
+- name: Configure WDS
+  hosts:
+    - wds01ans
+  vars_files:
+    - vars/wdsconfig.yml
+  gather_facts: no
+  tasks:
+    - name: ping
+      win_ping:
+
+    - name: create wdsimages folder
+      ansible.windows.win_file:
+        path: C:\WDSImages
+        state: directory
+
+    # - name: copy wim files
+    #   win_copy:
+    #     src: "{{ item.source}}"
+    #     dest: "{{ item.dest }}"
+    #     remote_src: yes
+    #   become: yes
+    #   become_method: runas
+    #   become_flags: logon_type=new_credentials logon_flags=netcredentials_only
+    #   vars:
+    #     ansible_become_user: 'hyperdrive\administrator'
+    #     ansible_become_password: "{{ ansible_password }}"
+    #   with_items: "{{ images }}"
+
+    - name: Install Windows Deployment Services with sub features and management tools
+      win_feature:
+        name: WDS
+        state: present
+        include_sub_features: yes
+        include_management_tools: yes
+      register: win_feature
+
+    - name: Reboot if installing Windows Deployment Services feature requires it
+      win_reboot:
+      when: win_feature.reboot_required

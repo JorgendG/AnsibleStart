@@ -15,13 +15,13 @@ vms:
     vmhost: nuc12
     network_switch: External
 
-  # - name: answin1001
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\answin1001.vhdx
-  #   unattend: installwin10ans.xml
-  #   vmhost: hyperdrive
-  #   network_switch: External
+  - name: answin1001
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\answin1001.vhdx
+    unattend: installwin10ans.xml
+    vmhost: hyperdrive
+    network_switch: External
 
   # - name: anssrv201601
   #   cpu: 2
@@ -31,18 +31,27 @@ vms:
   #   vmhost: nuc12
   #   network_switch: External
 
-  # - name: anssrv201901
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\anssrv201901.vhdx
-  #   unattend: install2019ans.xml
-  #   vmhost: hyperdrive
-  #   network_switch: External
+  - name: anssrv201901
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\anssrv201901.vhdx
+    unattend: install2019ans.xml
+    vmhost: hyperdrive
+    network_switch: External
 
-  # - name: anssrv202201
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\anssrv202201.vhdx
-  #   unattend: install2022ans.xml
-  #   vmhost: hyperdrive
-  #   network_switch: External
+  - name: anssrv202201
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\anssrv202201.vhdx
+    unattend: install2022ans.xml
+    vmhost: nuc12
+    network_switch: External
+
+  - name: wds01ans
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\wds01ans.vhdx
+    unattend: install2022ans.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: wds

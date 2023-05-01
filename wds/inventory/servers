@@ -1,0 +1,2 @@
+[wdsserver]
+wds01ans ansible_host=wds01ans
