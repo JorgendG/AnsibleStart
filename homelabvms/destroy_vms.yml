@@ -15,6 +15,6 @@
     - name: Delete VM
       win_hyperv_guest:
         name: "{{ item.name }}"
-        hostserver: hyperdrive
+        hostserver: "{{ item.vmhost }}"
         state: absent
       with_items: "{{ vms }}"

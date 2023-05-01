@@ -6,13 +6,13 @@
     - vars/wdsconfig.yml
   gather_facts: no
   tasks:
-    - name: ping
-      win_ping:
+    # - name: ping
+    #   win_ping:
 
-    - name: create wdsimages folder
-      ansible.windows.win_file:
-        path: C:\WDSImages
-        state: directory
+    # - name: create wdsimages folder
+    #   ansible.windows.win_file:
+    #     path: C:\WDSImages
+    #     state: directory
 
     # - name: copy wim files
     #   win_copy:
@@ -27,14 +27,27 @@
     #     ansible_become_password: "{{ ansible_password }}"
     #   with_items: "{{ images }}"
 
-    - name: Install Windows Deployment Services with sub features and management tools
-      win_feature:
-        name: WDS
-        state: present
-        include_sub_features: yes
-        include_management_tools: yes
-      register: win_feature
+    # - name: Install Windows Deployment Services with sub features and management tools
+    #   win_feature:
+    #     name: WDS
+    #     state: present
+    #     include_sub_features: yes
+    #     include_management_tools: yes
+    #   register: win_feature
 
-    - name: Reboot if installing Windows Deployment Services feature requires it
-      win_reboot:
-      when: win_feature.reboot_required
+    # - name: Reboot if installing Windows Deployment Services feature requires it
+    #   win_reboot:
+    #   when: win_feature.reboot_required
+
+    - name: Init Server
+      win_wds_img:
+        state: init
+
+    - name: Install Image
+      win_wds_img:
+        ImageName: "{{ item.ImageName }}"
+        GroupName: "{{ item.GroupName }}"
+        FilePath: "{{ item.dest }}"
+        state: present
+      with_items: "{{ images }}"
+      #when: item.GroupName == "iets"

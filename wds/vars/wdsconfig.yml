@@ -3,6 +3,7 @@ images:
     source: '\\hyperdrive\public\wim\boot.wim'
     dest: 'c:\wdsimages\boot.wim'
     ImageName: 'Microsoft Windows Setup (x64)'
+    GroupName: ''
 
   - name: Server2022
     source: '\\hyperdrive\public\wim\install2022.wim'

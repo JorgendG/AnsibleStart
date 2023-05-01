@@ -22,19 +22,19 @@ $params = Parse-Args $args;
 $result = @{};
 Set-Attr $result "changed" $false;
 
-$ImageName = Get-Attr -obj $params -name name -failifempty $true -emptyattributefailmessage "missing required argument: name"
-$group = Get-Attr -obj $params -name group
-$FilePath = Get-Attr -obj $params -name dest
+$ImageName = Get-Attr -obj $params -name ImageName 
+$GroupName = Get-Attr -obj $params -name GroupName
+$FilePath = Get-Attr -obj $params -name FilePath
 
 $state = Get-Attr -obj $params -name state -default "present"
 
-if ("present", "absent" -notcontains $state) {
-    Fail-Json $result "The state: $state doesn't exist; State can only be: present, absent, started or stopped"
+if ("present", "absent", "init" -notcontains $state) {
+    Fail-Json $result "The state: $state doesn't exist; State can only be: present, absent or init"
 }
 
 Function InstallWDSImage {
     #group empty means a bootimage
-    if ( $null -eq $group) {
+    if ( "" -eq $GroupName) {
         $CheckImage = Get-WdsBootImage -ImageName $ImageName
         if ( -not $CheckImage ) {
             Import-WdsBootImage -Path $FilePath
@@ -45,12 +45,12 @@ Function InstallWDSImage {
         }
     }
     else {
-        $CheckImage = Import-WDSInstallImage -ImageName $ImageName
+        $CheckImage = Get-WDSInstallImage -ImageName $ImageName
         if ( -not $CheckImage ) {
-            if ( -not (Get-WDSInstallGroup -Name $group) ) {
-                New-WDSInstallImageGroup -Name $group
+            if ( -not (Get-WDSInstallImageGroup -Name $GroupName -ErrorAction SilentlyContinue) ) {
+                New-WDSInstallImageGroup -Name $GroupName
             }
-            Import-WDSInstallImage -path $FilePath -ImageName $ImageName -ImageGroup $group
+            Import-WDSInstallImage -path $FilePath -ImageName $ImageName -ImageGroup $GroupName
             $result.changed = $true
         }
         else {
@@ -74,6 +74,18 @@ Function RemoveWDSImage {
     }
 }
 
+Function InitWDSServer {
+    $regvalue = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\WDSServer\Providers\WDSTFTP -Name "RootFolder" -ErrorAction SilentlyContinue
+
+    if ($null -eq $regvalue.RootFolder) {
+        & wdsutil.exe /initialize-server /reminst:"c:\RemoteInstall" /standalone
+        & WDSUTIL.exe /Set-Server /Transport /EnableTftpVariableWindowExtension:No
+        $result.changed = $true
+    }
+    else {
+        $result.changed = $false
+    }
+}
 
 
 
@@ -82,6 +94,7 @@ Try {
     switch ($state) {
         "present" { InstallWDSImage }
         "absent" { RemoveWDSImage }
+        "init" { InitWDSServer }
     }
 
     Exit-Json $result;
