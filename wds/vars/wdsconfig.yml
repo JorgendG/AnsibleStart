@@ -4,6 +4,7 @@ images:
     dest: 'c:\wdsimages\boot.wim'
     ImageName: 'Microsoft Windows Setup (x64)'
     GroupName: ''
+    Unattendfile: '' 
 
   - name: Server2022
     source: '\\hyperdrive\public\wim\install2022.wim'
@@ -39,3 +40,6 @@ images:
     ImageName: 'Windows 10 Enterprise'
     GroupName: 'Windows 11'
     Unattendfile: 'installwin11.xml'
+
+wdsusername: readonly
+wdsrootfolder: c:\RemoteInstall
