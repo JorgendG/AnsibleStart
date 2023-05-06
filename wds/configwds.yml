@@ -6,9 +6,6 @@
     - vars/wdsconfig.yml
   gather_facts: no
   tasks:
-    # - name: ping
-    #   win_ping:
-
     # - name: create wdsimages folder
     #   ansible.windows.win_file:
     #     path: C:\WDSImages
@@ -38,16 +35,33 @@
     # - name: Reboot if installing Windows Deployment Services feature requires it
     #   win_reboot:
     #   when: win_feature.reboot_required
+    - name: readonly user
+      win_user:
+        name: "{{ wdsusername }}"
+        password: "{{ wdsuserpass }}"
+        password_never_expires: true
+        state: present
+        groups:
+          - Users
 
     - name: Init Server
       win_wds_img:
         state: init
+        rootfolder: "{{ wdsrootfolder }}"
+        wdsusername: "{{ wdsusername }}"
+        wdsuserpass: "{{ wdsuserpass }}"
+        localadminpass: "{{ ansible_password }}"
 
     - name: Install Image
       win_wds_img:
         ImageName: "{{ item.ImageName }}"
+        Unattendfile: "{{ item.Unattendfile }}"
         GroupName: "{{ item.GroupName }}"
         FilePath: "{{ item.dest }}"
         state: present
       with_items: "{{ images }}"
-      #when: item.GroupName == "iets"
+
+    - name: Set WDS Answer
+      win_wds_img:
+        Answer: "Known"
+        state: Answer
