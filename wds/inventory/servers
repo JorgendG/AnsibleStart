@@ -1,2 +1,2 @@
 [wdsserver]
-wds01ans ansible_host=wds01ans
+wds02 ansible_host=wds02

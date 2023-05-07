@@ -61,7 +61,7 @@ Function InstallWDSImage {
             }
             #Fail-Json $result "The Unattendfile: $Unattendfile "
             Import-WDSInstallImage -path $FilePath -ImageName $ImageName -ImageGroup $GroupName -UnattendFile "C:\WDSImages\InstallImage.xml"
-            [xml]$xml = Get-Content "C:\WDSImages\installOSans.xml"
+            [xml]$xml = Get-Content "C:\WDSImages\installOS.xml"
             $winpe = $xml.unattend.settings | Where-Object { $_.pass -eq 'windowsPE' }
             $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.ImageSelection.InstallImage.ImageName = $ImageName
             $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.ImageSelection.InstallImage.ImageGroup = $GroupName
@@ -318,7 +318,7 @@ Function CreateOSUnattend {
         $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-International-Core-WinPE' } )
         $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Username = $wdsusername
         $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Password = $wdsuserpass
-        $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Domain = 'wds01'
+        $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Domain = $env:COMPUTERNAME
 
 
         $xmlunattend.Save( 'C:\WdsImages\InstallOS.xml' )

@@ -24,12 +24,8 @@
       with_items: "{{ vms }}"
       when: item.vmhost == inventory_hostname
 
-    - name: debug vmcreated
-      debug: msg="[vmcreated] is {{ item.changed }}"
-      with_items: "{{ vmcreated.results }}"
-
     - name: WDS Registration
-      delegate_to: wds01
+      delegate_to: wds02
       win_wds_reservation:
         name: "{{ item.vmname }}"
         macaddress: "{{ item.macaddress }}"

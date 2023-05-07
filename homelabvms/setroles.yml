@@ -6,22 +6,22 @@
   vars_files:
     - vars/homelabvms.yml
   tasks:
-    - name: list vms
-      debug: msg="[{{ inventory_hostname }}] vm list is {{ item.name }}"
-      with_items: "{{ vms }}"
-      when: item.vmhost == inventory_hostname
+    # - name: list vms
+    #   debug: msg="[{{ inventory_hostname }}] vm list is {{ item.name }}"
+    #   with_items: "{{ vms }}"
+    #   when: item.vmhost == inventory_hostname
 
-    - name: add host vms
-      add_host:
-        name: "{{ item.name }}"
-      with_items: "{{ vms }}"
-      when: item.vmhost == inventory_hostname
+    # - name: add host vms
+    #   add_host:
+    #     name: "{{ item.name }}"
+    #   with_items: "{{ vms }}"
+    #   when: item.vmhost == inventory_hostname
 
-    - name: ping VM
-      ansible.windows.win_ping:
-      delegate_to: "{{ item.name }}"
-      with_items: "{{ vms }}"
-      when: item.vmhost == inventory_hostname
+    # - name: ping VM
+    #   ansible.windows.win_ping:
+    #   delegate_to: "{{ item.name }}"
+    #   with_items: "{{ vms }}"
+    #   when: item.vmhost == inventory_hostname
 
     - name: join domain
       win_domain_membership:
@@ -33,3 +33,21 @@
       delegate_to: "{{ item.name }}"
       with_items: "{{ vms }}"
       when: item.vmhost == inventory_hostname
+
+    - name: debug domain state
+      debug: msg="{{ hostvars[inventory_hostname]['domain_state']['results'] }}"
+
+    - name: Reboot after join
+      delegate_to: "{{ item.name }}"
+      win_reboot:
+      with_items: "{{ hostvars[inventory_hostname]['domain_state']['results'] }}"
+      when: item.reboot_required
+
+    # - name: WDS Registration
+    #   delegate_to: wds02
+    #   win_wds_reservation:
+    #     name: "{{ item.vmname }}"
+    #     macaddress: "{{ item.macaddress }}"
+    #     unattend: "{{ item.item.unattend }}"
+    #     state: present
+    #   with_items: "{{ hostvars[inventory_hostname]['vmcreated']['results'] }}"
