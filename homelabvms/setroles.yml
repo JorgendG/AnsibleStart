@@ -1,53 +1,24 @@
 ---
 - name: Set roles homelab VMs
   hosts:
-    - hypervisor
+    - deliverycontrollers
   gather_facts: no
   vars_files:
-    - vars/homelabvms.yml
-  tasks:
-    # - name: list vms
-    #   debug: msg="[{{ inventory_hostname }}] vm list is {{ item.name }}"
-    #   with_items: "{{ vms }}"
-    #   when: item.vmhost == inventory_hostname
+    - homelabvms.yml
+    - citrix.yml
 
-    # - name: add host vms
-    #   add_host:
-    #     name: "{{ item.name }}"
-    #   with_items: "{{ vms }}"
-    #   when: item.vmhost == inventory_hostname
+  roles:
+    - domainmember
+    - citrix-delivery-controller
 
-    # - name: ping VM
-    #   ansible.windows.win_ping:
-    #   delegate_to: "{{ item.name }}"
-    #   with_items: "{{ vms }}"
-    #   when: item.vmhost == inventory_hostname
+- name: Citrix License server
+  hosts:
+    - licenseservers
+  gather_facts: no
+  vars_files:
+    - homelabvms.yml
+    - citrix.yml
 
-    - name: join domain
-      win_domain_membership:
-        dns_domain_name: homelabdc22.local
-        domain_admin_user: administrator@homelabdc22.local
-        domain_admin_password: "{{ ansible_password }}"
-        state: domain
-      register: domain_state
-      delegate_to: "{{ item.name }}"
-      with_items: "{{ vms }}"
-      when: item.vmhost == inventory_hostname
-
-    - name: debug domain state
-      debug: msg="{{ hostvars[inventory_hostname]['domain_state']['results'] }}"
-
-    - name: Reboot after join
-      delegate_to: "{{ item.name }}"
-      win_reboot:
-      with_items: "{{ hostvars[inventory_hostname]['domain_state']['results'] }}"
-      when: item.reboot_required
-
-    # - name: WDS Registration
-    #   delegate_to: wds02
-    #   win_wds_reservation:
-    #     name: "{{ item.vmname }}"
-    #     macaddress: "{{ item.macaddress }}"
-    #     unattend: "{{ item.item.unattend }}"
-    #     state: present
-    #   with_items: "{{ hostvars[inventory_hostname]['vmcreated']['results'] }}"
+  roles:
+    - domainmember
+    - citrix-license-server

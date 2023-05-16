@@ -1,8 +1,18 @@
 
 [hypervisor]
 hyperdrive ansible_host=hyperdrive
-nuc12 ansible_host=192.168.1.186 ansible_user=hypervadmin
+nuc12 ansible_host=192.168.1.97 ansible_user=hypervadmin
 
 [wdsserver]
 wds01 ansible_host=wds01
 wds02 ansible_host=wds02
+
+[deliverycontrollers]
+member02 ansible_host=member02
+
+[licenseservers]
+member01 ansible_host=member01
+
+[goldenimage]
+w11vdi01 ansible_host=w11vdi01
+w11vdi02 ansible_host=w11vdi02

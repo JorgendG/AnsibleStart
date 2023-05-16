@@ -1,60 +1,4 @@
 vms:
-  # - name: answin1101
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\answin1101.vhdx
-  #   unattend: installwin11.xml
-  #   vmhost: hyperdrive
-  #   network_switch: External
-
-  # - name: answin1102
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\answin1102.vhdx
-  #   unattend: installwin11.xml
-  #   vmhost: nuc12
-  #   network_switch: External
-
-  # - name: answin1001
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\answin1001.vhdx
-  #   unattend: installwin10.xml
-  #   vmhost: hyperdrive
-  #   network_switch: External
-
-  # - name: anssrv201601
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\anssrv201601.vhdx
-  #   unattend: install2016.xml
-  #   vmhost: nuc12
-  #   network_switch: External
-
-  # - name: anssrv201901
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\anssrv201901.vhdx
-  #   unattend: install2019.xml
-  #   vmhost: hyperdrive
-  #   network_switch: External
-
-  # - name: anssrv202201
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\anssrv202201.vhdx
-  #   unattend: install2022.xml
-  #   vmhost: nuc12
-  #   network_switch: External
-
-  # - name: wds02
-  #   cpu: 2
-  #   memory: 4096MB
-  #   diskpath: c:\vhdx\wds02.vhdx
-  #   unattend: install2022.xml
-  #   vmhost: hyperdrive
-  #   network_switch: External
-  #   role: wds
 
   - name: wds03
     cpu: 2
@@ -64,3 +8,30 @@ vms:
     vmhost: hyperdrive
     network_switch: External
     role: wds
+
+  - name: member02
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\member02.vhdx
+    unattend: install2019.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: member
+
+  - name: w11vdi01
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\w11vdi01.vhdx
+    unattend: installwin11.xml
+    vmhost: nuc12
+    network_switch: External
+    role: member
+
+  - name: w11vdi02
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\w11vdi02.vhdx
+    unattend: installwin11.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: member

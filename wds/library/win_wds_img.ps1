@@ -38,110 +38,110 @@ $localadminpass = Get-Attr -obj $params -name localadminpass
 $state = Get-Attr -obj $params -name state -default "present"
 
 if ("present", "absent", "init", "answer" -notcontains $state) {
-    Fail-Json $result "The state: $state doesn't exist; State can only be: present, absent, init or answer"
+  Fail-Json $result "The state: $state doesn't exist; State can only be: present, absent, init or answer"
 }
 
 Function InstallWDSImage {
-    #group empty means a bootimage
-    if ( "" -eq $GroupName) {
-        $CheckImage = Get-WdsBootImage -ImageName $ImageName
-        if ( -not $CheckImage ) {
-            Import-WdsBootImage -Path $FilePath
-            $result.changed = $true
-        }
-        else {
-            $result.changed = $false
-        }
+  #group empty means a bootimage
+  if ( "" -eq $GroupName) {
+    $CheckImage = Get-WdsBootImage -ImageName $ImageName
+    if ( -not $CheckImage ) {
+      Import-WdsBootImage -Path $FilePath
+      $result.changed = $true
     }
     else {
-        $CheckImage = Get-WDSInstallImage -ImageName $ImageName
-        if ( -not $CheckImage ) {
-            if ( -not (Get-WDSInstallImageGroup -Name $GroupName -ErrorAction SilentlyContinue) ) {
-                New-WDSInstallImageGroup -Name $GroupName
-            }
-            #Fail-Json $result "The Unattendfile: $Unattendfile "
-            Import-WDSInstallImage -path $FilePath -ImageName $ImageName -ImageGroup $GroupName -UnattendFile "C:\WDSImages\InstallImage.xml"
-            [xml]$xml = Get-Content "C:\WDSImages\installOS.xml"
-            $winpe = $xml.unattend.settings | Where-Object { $_.pass -eq 'windowsPE' }
-            $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.ImageSelection.InstallImage.ImageName = $ImageName
-            $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.ImageSelection.InstallImage.ImageGroup = $GroupName
-            $xml.Save( "$rootfolder\WdsClientUnattend\$($Unattendfile)" )
-            $result.changed = $true
-        }
-        else {
-            {
-                $result.changed = $false
-            }
-        }
+      $result.changed = $false
     }
+  }
+  else {
+    $CheckImage = Get-WDSInstallImage -ImageName $ImageName
+    if ( -not $CheckImage ) {
+      if ( -not (Get-WDSInstallImageGroup -Name $GroupName -ErrorAction SilentlyContinue) ) {
+        New-WDSInstallImageGroup -Name $GroupName
+      }
+      #Fail-Json $result "The Unattendfile: $Unattendfile "
+      Import-WDSInstallImage -path $FilePath -ImageName $ImageName -ImageGroup $GroupName -UnattendFile "C:\WDSImages\InstallImage.xml"
+      [xml]$xml = Get-Content "C:\WDSImages\installOS.xml"
+      $winpe = $xml.unattend.settings | Where-Object { $_.pass -eq 'windowsPE' }
+      $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.ImageSelection.InstallImage.ImageName = $ImageName
+      $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.ImageSelection.InstallImage.ImageGroup = $GroupName
+      $xml.Save( "$rootfolder\WdsClientUnattend\$($Unattendfile)" )
+      $result.changed = $true
+    }
+    else {
+      {
+        $result.changed = $false
+      }
+    }
+  }
 }
 
 Function RemoveWDSImage {
-    $CheckImage = Import-WDSInstallImage -ImageName $ImageName
+  $CheckImage = Import-WDSInstallImage -ImageName $ImageName
 
-    if ($CheckImage) {
-        Remove-WDSInstallImage -ImageName $ImageName -ImageGroup $GroupName
+  if ($CheckImage) {
+    Remove-WDSInstallImage -ImageName $ImageName -ImageGroup $GroupName
         
-        $result.changed = $true
-    }
-    else {
-        $result.changed = $false
-    }
+    $result.changed = $true
+  }
+  else {
+    $result.changed = $false
+  }
 }
 
 Function InitWDSServer {
-    $regvalue = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\WDSServer\Providers\WDSTFTP -Name "RootFolder" -ErrorAction SilentlyContinue
+  $regvalue = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\WDSServer\Providers\WDSTFTP -Name "RootFolder" -ErrorAction SilentlyContinue
 
-    if ($null -eq $regvalue.RootFolder) {
-        & wdsutil.exe /initialize-server /reminst:"$rootfolder" /standalone
-        & WDSUTIL.exe /Set-Server /Transport /EnableTftpVariableWindowExtension:No
-        $result.changed = $true
-    }
-    else {
-        $result.changed = $false
-    }
-    CreateImageUnattend
-    CreateOSUnattend
+  if ($null -eq $regvalue.RootFolder) {
+    & wdsutil.exe /initialize-server /reminst:"$rootfolder" /standalone
+    & WDSUTIL.exe /Set-Server /Transport /EnableTftpVariableWindowExtension:No
+    $result.changed = $true
+  }
+  else {
+    $result.changed = $false
+  }
+  CreateImageUnattend
+  CreateOSUnattend
 }
 
 Function AnswerWDSServer {
-    $clientsknown = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\WDSServer\Providers\WDSPXE\Providers\BINLSVC -Name "netbootAnswerOnlyValidClients" -ErrorAction SilentlyContinue
-    $clientsnone = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\WDSServer\Providers\WDSPXE\Providers\BINLSVC -Name "netbootAnswerRequests" -ErrorAction SilentlyContinue
+  $clientsknown = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\WDSServer\Providers\WDSPXE\Providers\BINLSVC -Name "netbootAnswerOnlyValidClients" -ErrorAction SilentlyContinue
+  $clientsnone = Get-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\WDSServer\Providers\WDSPXE\Providers\BINLSVC -Name "netbootAnswerRequests" -ErrorAction SilentlyContinue
 
-    if ( ($clientsnone.netbootAnswerRequests -eq "FALSE") -and ($Answer -eq "none")) {
-        $result.changed = $false
-        return
-    }
-    if (  ($Answer -eq "none")) {
-        & wdsutil.exe /set-server /AnswerClients:"$Answer"
-        $result.changed = $true
-        return
-    }
-    if ( ($clientsknown.netbootAnswerOnlyValidClients -eq "TRUE") -and ($Answer -eq "known") ) {
-        $result.changed = $false
-        return
-    }
-    if (  ($Answer -eq "known")) {
-        & wdsutil.exe /set-server /AnswerClients:"$Answer"
-        $result.changed = $true
-        return
-    }
-    if ( ($clientsknown.netbootAnswerOnlyValidClients -eq "TRUE") -and ($Answer -eq "all") ) {
-        $result.changed = $false
-        return
-    }
-    if (  ($Answer -eq "all")) {
-        & wdsutil.exe /set-server /AnswerClients:"$Answer"
-        $result.changed = $true
-        return
-    }
+  if ( ($clientsnone.netbootAnswerRequests -eq "FALSE") -and ($Answer -eq "none")) {
+    $result.changed = $false
+    return
+  }
+  if (  ($Answer -eq "none")) {
+    & wdsutil.exe /set-server /AnswerClients:"$Answer"
+    $result.changed = $true
+    return
+  }
+  if ( ($clientsknown.netbootAnswerOnlyValidClients -eq "TRUE") -and ($Answer -eq "known") ) {
+    $result.changed = $false
+    return
+  }
+  if (  ($Answer -eq "known")) {
+    & wdsutil.exe /set-server /AnswerClients:"$Answer"
+    $result.changed = $true
+    return
+  }
+  if ( ($clientsknown.netbootAnswerOnlyValidClients -eq "TRUE") -and ($Answer -eq "all") ) {
+    $result.changed = $false
+    return
+  }
+  if (  ($Answer -eq "all")) {
+    & wdsutil.exe /set-server /AnswerClients:"$Answer"
+    $result.changed = $true
+    return
+  }
 }
 
 Function CreateImageUnattend {
-    $testfile = Test-Path "C:\WdsImages\InstallImage.xml"
+  $testfile = Test-Path "C:\WdsImages\InstallImage.xml"
 
-    if (-not $testfile) {
-        $xmlunattend = [xml]'<unattend xmlns="urn:schemas-microsoft-com:unattend">
+  if (-not $testfile) {
+    $xmlunattend = [xml]'<unattend xmlns="urn:schemas-microsoft-com:unattend">
         <settings pass="generalize">
           <component name="Microsoft-Windows-Security-SPP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <SkipRearm>1</SkipRearm>
@@ -183,6 +183,14 @@ Function CreateImageUnattend {
               </FirewallGroup>
             </FirewallGroups>
           </component>
+          <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <RunSynchronous>
+              <RunSynchronousCommand wcm:action="add">
+                <Path>net user administrator /active:yes</Path>
+                <Order>1</Order>
+              </RunSynchronousCommand>
+            </RunSynchronous>
+          </component>
         </settings>
         <settings pass="oobeSystem">
           <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -205,19 +213,19 @@ Function CreateImageUnattend {
           </component>
         </settings>
       </unattend>'
-        $oobeSystem = $xmlunattend.unattend.settings | Where-Object { $_.pass -eq 'oobeSystem' }
-        $oobeSystem.component.UserAccounts.AdministratorPassword.Value = $localadminpass
+    $oobeSystem = $xmlunattend.unattend.settings | Where-Object { $_.pass -eq 'oobeSystem' }
+    $oobeSystem.component.UserAccounts.AdministratorPassword.Value = $localadminpass
 
-        $xmlunattend.Save( 'C:\WdsImages\InstallImage.xml' )
-        $result.changed = $true
-    }
+    $xmlunattend.Save( 'C:\WdsImages\InstallImage.xml' )
+    $result.changed = $true
+  }
 }
 
 Function CreateOSUnattend {
-    $testfile = Test-Path "C:\WdsImages\InstallOS.xml"
+  $testfile = Test-Path "C:\WdsImages\InstallOS.xml"
 
-    if (-not $testfile) {
-        $xmlunattend = [xml]'<unattend xmlns="urn:schemas-microsoft-com:unattend">
+  if (-not $testfile) {
+    $xmlunattend = [xml]'<unattend xmlns="urn:schemas-microsoft-com:unattend">
         <settings pass="windowsPE">
           <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <SetupUILanguage>
@@ -314,29 +322,29 @@ Function CreateOSUnattend {
           </component>
         </settings>
       </unattend>'
-        $winpe = $xmlunattend.unattend.settings | Where-Object { $_.pass -eq 'windowsPE' }
-        $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-International-Core-WinPE' } )
-        $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Username = $wdsusername
-        $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Password = $wdsuserpass
-        $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Domain = $env:COMPUTERNAME
+    $winpe = $xmlunattend.unattend.settings | Where-Object { $_.pass -eq 'windowsPE' }
+    $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-International-Core-WinPE' } )
+    $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Username = $wdsusername
+    $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Password = $wdsuserpass
+    $winpe.component.Where( { $_.name -eq 'Microsoft-Windows-Setup' } ).WindowsDeploymentServices.Login.Credentials.Domain = $env:COMPUTERNAME
 
 
-        $xmlunattend.Save( 'C:\WdsImages\InstallOS.xml' )
-        $result.changed = $true
-    }
+    $xmlunattend.Save( 'C:\WdsImages\InstallOS.xml' )
+    $result.changed = $true
+  }
 }
 
 
 Try {
-    switch ($state) {
-        "present" { InstallWDSImage }
-        "absent" { RemoveWDSImage }
-        "init" { InitWDSServer }
-        "answer" { AnswerWDSServer }
-    }
+  switch ($state) {
+    "present" { InstallWDSImage }
+    "absent" { RemoveWDSImage }
+    "init" { InitWDSServer }
+    "answer" { AnswerWDSServer }
+  }
 
-    Exit-Json $result;
+  Exit-Json $result;
 }
 Catch {
-    Fail-Json $result $_.Exception.Message
+  Fail-Json $result $_.Exception.Message
 }

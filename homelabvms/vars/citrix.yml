@@ -1,0 +1,29 @@
+---
+citrix:
+  version: '1912'
+  source: Citrix_Virtual_Apps_and_Desktops_7_1912_5000.iso
+  path: "\\\\hyperdrive\\iso"
+  vdacore: "\\\\hyperdrive\\public\\xendesktop\\1912\\VDAWorkStationCoreSetup_2303.exe"
+  site: Default
+  database_server: "SQL03"
+  database_port: 1433
+  database_site: CVAD_Site_DB
+  database_logging: CVAD_Logging_DB
+  database_monitoring: CVAD_Monitoring_DB
+  admin: HOMELABDC22\Domain Admins
+  role: Full Administrator
+  scope: All
+  grooming: 365
+  licensing:
+    port: 27000
+    model: Concurrent
+    code: XDT
+    edition: PLT
+  storefront:
+    url: http://citrix.go.euc
+    path: /Citrix/Store
+    transport: http
+    gateway:
+      name: ADCGW1
+      url: https://adc.go.euc
+      sta_url: http://ctxddc-1/scripts/ctxa.dll

@@ -1,0 +1,74 @@
+---
+- name: Set roles homelab VMs
+  hosts:
+    - w11vdi02
+  gather_facts: no
+  vars_files:
+    - homelabvms.yml
+    - citrix.yml
+  roles:
+    - domainmember
+  tasks:
+    - name: ping
+      win_ping:
+
+    - name: Block for Citrix installation
+      block:
+        - name: Install NuGet
+          win_shell: Install-PackageProvider -Name Nuget -Force
+
+        - name: Check for PendingReboot module
+          win_psmodule:
+            name: PendingReboot
+            state: present
+            accept_license: true
+          retries: 3
+          delay: 10
+          register: result
+          until: result is not failed
+
+        - name: Create Log Folder
+          win_file:
+            path: C:\Logs
+            state: directory
+
+        - name: Create Download Folder
+          win_file:
+            path: C:\Download
+            state: directory
+
+        - name: Create Citrix Download Folder
+          win_file:
+            path: C:\Download\Citrix
+            state: directory
+
+        - name: Check if Citrix VDAWorkstation Core Setup is downloaded yet
+          win_stat:
+            path: "C:\\Download\\Citrix\\VDAWorkstationCoreSetup.exe"
+          register: citrix_iso
+
+        - name: Copy Citrix VDAWorkstation Core Setup
+          win_copy:
+            src: "{{citrix.vdacore}}"
+            dest: "C:\\Download\\Citrix\\VDAWorkstationCoreSetup.exe"
+            remote_src: yes
+            force: no
+          become: true
+          become_method: runas
+          become_flags: logon_type=new_credentials logon_flags=netcredentials_only
+          vars:
+            ansible_become_user: 'hyperdrive\administrator'
+            ansible_become_password: "{{ ansible_password }}"
+          when: citrix_iso.stat.exists == false
+
+        - name: Install Citrix VDAWorkstation
+          win_package:
+            path: "C:\\Download\\Citrix\\VDAWorkstationCoreSetup.exe"
+            arguments: /noreboot /quiet /logpath C:\Logs
+            state: present
+            expected_return_code: [0, 3, 3010]
+          register: citrix_installation
+
+        - name: Reboot to complete Citrix VDAWorkstation installation
+          ansible.windows.win_reboot:
+          when: citrix_installation.reboot_required == true
