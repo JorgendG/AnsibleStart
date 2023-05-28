@@ -6,11 +6,6 @@
   vars_files:
     - vars/homelabvms.yml
   tasks:
-    # - name: list vms
-    #   debug: msg="[{{ inventory_hostname }}] vm list is  {{ item.name }}"
-    #   with_items: "{{ vms }}"
-    #   when: item.vmhost == inventory_hostname
-
     - name: Create VM
       win_hyperv_guest:
         name: "{{ item.name }}"

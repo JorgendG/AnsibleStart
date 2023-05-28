@@ -10,9 +10,20 @@ wds02 ansible_host=wds02
 [deliverycontrollers]
 member02 ansible_host=member02
 
+[domaincontrollers]
+dc22 ansible_host=dc22
+dc23 ansible_host=dc23
+
 [licenseservers]
 member01 ansible_host=member01
 
 [goldenimage]
-w11vdi01 ansible_host=w11vdi01
+#w11vdi01 ansible_host=w11vdi01
 w11vdi02 ansible_host=w11vdi02
+w11vdi03 ansible_host=w11vdi03
+
+[ca]
+ca03 ansible_host=ca03
+
+[caroot]
+rootca ansible_host=rootca

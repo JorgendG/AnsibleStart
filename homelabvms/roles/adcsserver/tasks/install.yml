@@ -1,0 +1,31 @@
+---
+- name: Ensure the required NuGet package provider is installed
+  win_packageprovider:
+    name: NuGet
+
+- name: Install required PowerShell modules
+  win_psmodule:
+    name: "{{ item }}"
+    state: present
+    accept_license: true
+    skip_publisher_check: true
+  retries: 5
+  delay: 30
+  loop:
+    - PowerShellGet
+    - PackageManagement
+    - ActiveDirectoryCSDsc
+
+- name: Install Active Directory CS
+  win_feature:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - ADCS-Cert-Authority
+    - ADCS-Web-Enrollment
+
+- name: Install Active Directory CS Admin Tools
+  win_feature:
+    name: RSAT-ADCS
+    include_sub_features: true
+    state: present

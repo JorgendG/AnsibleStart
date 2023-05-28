@@ -96,12 +96,6 @@
         path: "C:\\Download\\Citrix\\{{citrix.source}}"
       register: citrix_iso
 
-    # - name: Download Citrix ISO
-    #   win_get_url:
-    #     url: "{{citrix.path}}/{{citrix.version}}/{{citrix.source}}"
-    #     dest: "C:\\Download\\Citrix\\{{citrix.source}}"
-    #   when: citrix_iso.stat.exists == false
-    
     - name: Copy Citrix ISO
       win_copy:
         src: "{{citrix.path}}/{{citrix.source}}"

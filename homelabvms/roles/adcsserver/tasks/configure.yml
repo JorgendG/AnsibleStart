@@ -1,0 +1,83 @@
+---
+- name: Create CertEnroll Folder
+  win_file:
+    path: C:\Windows\System32\CertSrv\CertEnroll
+    state: directory
+
+- name: Create CAPolicy.inf
+  win_copy:
+    src: CAPolicy.inf
+    dest: C:\Windows\CAPolicy.inf
+
+- name: Configure CA
+  win_dsc:
+    resource_name: ADCSCertificationAuthority
+    IsSingleInstance: 'Yes'
+    Ensure: 'Present'
+    Credential_username: "{{domain.domain_admin}}"
+    Credential_password: "{{ ansible_password }}"
+    CAType: 'EnterpriseSubordinateCA'
+    CACommonName:              "{{pki.ca03.CACommonName}}"
+    CADistinguishedNameSuffix: "{{pki.ca03.CADistinguishedNameSuffix}}"
+    OverwriteExistingCAinDS:   True
+    OutputCertRequestFile:     'c:\windows\system32\certsrv\certenroll\ca03.req'
+
+- name: Configure WebEnrollment
+  win_dsc:
+    resource_name: ADCSWebEnrollment
+    IsSingleInstance: 'Yes'
+    Ensure: 'Present'
+    Credential_username: "{{domain.domain_admin}}"
+    Credential_password: "{{ ansible_password }}"
+
+- name: Copy req to root
+  block:
+    - name: Check if req file is downloaded yet
+      win_stat:
+        path: "{{pki.ca03.OutputCertRequestFile}}"
+      register: reqfile
+      delegate_to: rootca
+
+    - name: Get req file content
+      ansible.builtin.slurp:
+        src: "{{pki.ca03.OutputCertRequestFile}}"
+      register: reqfilecontents
+      when: reqfile.stat.exists == false
+
+    - name: Print returned information
+      ansible.builtin.debug:
+        msg: "{{ reqfilecontents['content'] | b64decode }}"
+      when: reqfile.stat.exists == false
+    
+    - name: Create req file
+      win_copy:
+        dest: "{{pki.ca03.OutputCertRequestFile}}"
+        content: "{{ reqfilecontents['content'] | b64decode }}"
+      delegate_to: rootca
+      when: reqfile.stat.exists == false
+
+    - name: Check if crt file exists
+      win_stat:
+        path: "{{pki.ca03.OutputCertFile}}"
+      register: crtfile
+      delegate_to: rootca
+
+    - name: Submit req
+      win_pki_submitreq:
+        reqfile: "{{pki.ca03.OutputCertRequestFile}}"
+        crtfile: "{{pki.ca03.OutputCertFile}}"
+        CACommonName: "{{pki.RootCACommonName}}"
+      delegate_to: rootca
+      when: crtfile.stat.exists == false
+
+    - name: Get crt file content
+      ansible.builtin.slurp:
+        src: "{{pki.ca03.OutputCertFile}}"
+      register: crtfilecontents
+      delegate_to: rootca
+      
+    - name: Create crt file
+      win_copy:
+        dest: "{{pki.ca03.OutputCertFile}}"
+        content: "{{ crtfilecontents['content'] | b64decode }}"
+      

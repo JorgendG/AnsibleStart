@@ -1,0 +1,11 @@
+- name: Domain Controllers
+  hosts:
+    - domaincontrollers
+  gather_facts: no
+  vars_files:
+    - homelabvms.yml
+    - domain.yml
+  tasks:
+    - debug:
+        var: domain["{{inventory_hostname}}"].adapter_name
+      #when: foo is defined

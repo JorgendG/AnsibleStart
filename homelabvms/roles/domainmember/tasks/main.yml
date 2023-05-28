@@ -1,11 +1,17 @@
 ---
 - name: Domain join
   block:
-
+  - name: Set DNS to primary domain controller
+    win_dns_client:
+      adapter_names: '*'
+      ipv4_addresses:
+        - "{{domain.dc22.ipaddress}}"
+        - "{{domain.dc23.ipaddress}}"
+        
   - name: join domain
     win_domain_membership:
-      dns_domain_name: homelabdc22.local
-      domain_admin_user: administrator@homelabdc22.local
+      dns_domain_name: "{{ domain.dns_domain_name }}"
+      domain_admin_user: "{{ domain.domain_admin }}"
       domain_admin_password: "{{ ansible_password }}"
       state: domain
     register: domain_state

@@ -1,7 +1,7 @@
 ---
 - name: Set roles homelab VMs
   hosts:
-    - w11vdi02
+    - goldenimage
   gather_facts: no
   vars_files:
     - homelabvms.yml
@@ -9,9 +9,6 @@
   roles:
     - domainmember
   tasks:
-    - name: ping
-      win_ping:
-
     - name: Block for Citrix installation
       block:
         - name: Install NuGet
@@ -72,3 +69,7 @@
         - name: Reboot to complete Citrix VDAWorkstation installation
           ansible.windows.win_reboot:
           when: citrix_installation.reboot_required == true
+
+        - name: Check for pending reboot
+          win_shell: (Test-PendingReboot -SkipConfigurationManagerClientCheck).IsRebootPending
+          register: pending_reboot

@@ -1,0 +1,15 @@
+---
+domain:
+  dns_domain_name: 'homelabdc22.local'
+  domain_admin: 'administrator@homelabdc22.local'
+  dc22:
+    ipaddress: 192.168.1.22
+    ipsubnet: 24
+    gateway: 192.168.1.1
+    adapter_name: Ethernet
+  dc23:
+    ipaddress: 192.168.1.23
+    ipsubnet: 24
+    gateway: 192.168.1.1
+    adapter_name: Ethernet
+

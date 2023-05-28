@@ -35,3 +35,39 @@ vms:
     vmhost: hyperdrive
     network_switch: External
     role: member
+
+  - name: w11vdi03
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\w11vdi03.vhdx
+    unattend: installwin11.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: member
+
+  - name: dc22
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\dc22.vhdx
+    unattend: install2022.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: member
+
+  - name: dc23
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\dc23.vhdx
+    unattend: install2022.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: member
+
+  - name: ca03
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\ca03.vhdx
+    unattend: install2022.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: member

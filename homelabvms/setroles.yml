@@ -1,24 +1,45 @@
 ---
-- name: Set roles homelab VMs
+# - name: Set roles homelab VMs
+#   hosts:
+#     - deliverycontrollers
+#   gather_facts: no
+#   vars_files:
+#     - homelabvms.yml
+#     - citrix.yml
+
+#   roles:
+#     - domainmember
+#     - citrix-delivery-controller
+
+# - name: Citrix License server
+#   hosts:
+#     - licenseservers
+#   gather_facts: no
+#   vars_files:
+#     - homelabvms.yml
+#     - citrix.yml
+
+#   roles:
+#     - domainmember
+#     - citrix-license-server
+
+# - name: Domain Controllers
+#   hosts:
+#     - domaincontrollers
+#   gather_facts: no
+#   vars_files:
+#     - homelabvms.yml
+#     - domain.yml
+#   roles:
+#     - domaincontroller
+
+- name: CA Servers
   hosts:
-    - deliverycontrollers
+    - ca
   gather_facts: no
   vars_files:
-    - homelabvms.yml
-    - citrix.yml
-
+    - pki.yml
+    - domain.yml
   roles:
     - domainmember
-    - citrix-delivery-controller
-
-- name: Citrix License server
-  hosts:
-    - licenseservers
-  gather_facts: no
-  vars_files:
-    - homelabvms.yml
-    - citrix.yml
-
-  roles:
-    - domainmember
-    - citrix-license-server
+    - adcsserver

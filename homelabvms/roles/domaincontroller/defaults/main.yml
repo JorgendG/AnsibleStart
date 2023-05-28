@@ -1,0 +1,4 @@
+---
+public_dns1: 8.8.8.8
+public_dns2: 8.8.4.4
+public_ntp: 0.nl.pool.ntp.org,1.nl.pool.ntp.org
