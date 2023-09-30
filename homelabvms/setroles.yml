@@ -33,13 +33,23 @@
 #   roles:
 #     - domaincontroller
 
-- name: CA Servers
+# - name: CA Servers
+#   hosts:
+#     - ca
+#   gather_facts: no
+#   vars_files:
+#     - pki.yml
+#     - domain.yml
+#   roles:
+#     - domainmember
+#     - adcsserver
+
+- name: Webservers
   hosts:
-    - ca
+    - webservers
   gather_facts: no
   vars_files:
-    - pki.yml
     - domain.yml
   roles:
     - domainmember
-    - adcsserver
+    - webserver

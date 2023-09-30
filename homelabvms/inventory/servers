@@ -27,3 +27,11 @@ ca03 ansible_host=ca03
 
 [caroot]
 rootca ansible_host=rootca
+
+[ivanti]
+ivanti01 ansible_host=ivanti01
+ivanti02 ansible_host=ivanti02
+
+[webservers]
+web01 ansible_host=web01
+web02 ansible_host=web02

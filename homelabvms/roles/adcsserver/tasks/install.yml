@@ -12,7 +12,7 @@
   retries: 5
   delay: 30
   loop:
-    - PowerShellGet
+#    - PowerShellGet
     - PackageManagement
     - ActiveDirectoryCSDsc
 

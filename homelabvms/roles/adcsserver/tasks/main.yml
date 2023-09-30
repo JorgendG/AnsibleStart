@@ -1,6 +1,6 @@
 ---
-# - name: Install Active Directory Certificate Service server
-#   import_tasks: install.yml
+- name: Install Active Directory Certificate Service server
+  import_tasks: install.yml
 
 - name: Configure Active Directory Certificate Service server
   import_tasks: configure.yml

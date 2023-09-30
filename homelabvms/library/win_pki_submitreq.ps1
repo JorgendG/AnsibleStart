@@ -8,18 +8,17 @@ $params = Parse-Args $args -supports_check_mode $false
 
 $reqfile = Get-AnsibleParam $params "reqfile" -type "str"
 $crtfile = Get-AnsibleParam $params "crtfile" -type "str"
+$careg = Get-AnsibleParam $params "careg" -type "str"
+$caregvalue = Get-AnsibleParam $params "caregvalue" -type "str"
 $CACommonName = Get-AnsibleParam $params "CACommonName" -type "str" 
 $state = Get-AnsibleParam $params "state" -type "str" -Default "present"
+$action = Get-AnsibleParam $params "action" -type "str"
 
 $result = @{
     changed = $false
 }
 
-if ($state -eq "absent") {
-
-}
-else {
-    
+function SubmitRequest {
     $pinfo = New-Object System.Diagnostics.ProcessStartInfo
     $pinfo.FileName = "$($ENV:SystemRoot)\System32\Certreq.exe"
     $pinfo.RedirectStandardError = $true
@@ -31,6 +30,8 @@ else {
     $p.Start() | Out-Null
     $p.WaitForExit()
     $RequestResult = $p.StandardOutput.ReadToEnd()
+    $result.changed = $true
+    Write-Host $RequestResult
 
     $MatchesReqs = [Regex]::Match($RequestResult, 'RequestId:\s([0-9]*)')
     If ($MatchesReqs.Groups.Count -lt 2) {
@@ -52,6 +53,69 @@ else {
     $p.StartInfo = $pinfo
     $p.Start() | Out-Null
     $p.WaitForExit()
+}
+
+function InstallCrt {
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = "$($ENV:SystemRoot)\System32\Certutil.exe"
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = "-installCert $crtfile"
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+    $p.WaitForExit()
+
+    $RequestResult = $p.StandardOutput.ReadToEnd()
+    $result.changed = $true
+    Write-Host $RequestResult
+}
+
+function ConfigCA {
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = "$($ENV:SystemRoot)\System32\Certutil.exe"
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = "-setreg $crtfile"
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+    $p.WaitForExit()
+}
+
+function SetCAReg {
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = "$($ENV:SystemRoot)\System32\certutil.exe"
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = '-setreg CA\' + "$careg `"$caregvalue`""
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+    $p.WaitForExit()
+    $RequestResult = $p.StandardOutput.ReadToEnd()
+}
+
+if ($state -eq "absent") {
+
+}
+else {
+    if ( $action -eq 'submit' ) {
+        SubmitRequest
+    }
+    if ( $action -eq 'install' ) {
+        InstallCrt
+    }
+    if ( $action -eq 'config' ) {
+        ConfigCA
+    }
+    if ( $action -eq 'reg' ) {
+        SetCAReg
+    }
+    
 }
 
 Exit-Json $result

@@ -1,67 +1,67 @@
 vms:
 
-  - name: wds03
-    cpu: 2
-    memory: 4096MB
-    diskpath: c:\vhdx\wds03.vhdx
-    unattend: install2022.xml
-    vmhost: hyperdrive
-    network_switch: External
-    role: wds
+  # - name: wds03
+  #   cpu: 2
+  #   memory: 4096MB
+  #   diskpath: c:\vhdx\wds03.vhdx
+  #   unattend: install2022.xml
+  #   vmhost: hyperdrive
+  #   network_switch: External
+  #   role: wds
 
-  - name: member02
-    cpu: 2
-    memory: 4096MB
-    diskpath: c:\vhdx\member02.vhdx
-    unattend: install2019.xml
-    vmhost: hyperdrive
-    network_switch: External
-    role: member
+  # - name: member02
+  #   cpu: 2
+  #   memory: 4096MB
+  #   diskpath: c:\vhdx\member02.vhdx
+  #   unattend: install2019.xml
+  #   vmhost: hyperdrive
+  #   network_switch: External
+  #   role: member
 
-  - name: w11vdi01
-    cpu: 2
-    memory: 4096MB
-    diskpath: c:\vhdx\w11vdi01.vhdx
-    unattend: installwin11.xml
-    vmhost: nuc12
-    network_switch: External
-    role: member
+  # - name: w11vdi01
+  #   cpu: 2
+  #   memory: 4096MB
+  #   diskpath: c:\vhdx\w11vdi01.vhdx
+  #   unattend: installwin11.xml
+  #   vmhost: nuc12
+  #   network_switch: External
+  #   role: member
 
-  - name: w11vdi02
-    cpu: 2
-    memory: 4096MB
-    diskpath: c:\vhdx\w11vdi02.vhdx
-    unattend: installwin11.xml
-    vmhost: hyperdrive
-    network_switch: External
-    role: member
+  # - name: w11vdi02
+  #   cpu: 2
+  #   memory: 4096MB
+  #   diskpath: c:\vhdx\w11vdi02.vhdx
+  #   unattend: installwin11.xml
+  #   vmhost: hyperdrive
+  #   network_switch: External
+  #   role: member
 
-  - name: w11vdi03
-    cpu: 2
-    memory: 4096MB
-    diskpath: c:\vhdx\w11vdi03.vhdx
-    unattend: installwin11.xml
-    vmhost: hyperdrive
-    network_switch: External
-    role: member
+  # - name: w11vdi03
+  #   cpu: 2
+  #   memory: 4096MB
+  #   diskpath: c:\vhdx\w11vdi03.vhdx
+  #   unattend: installwin11.xml
+  #   vmhost: hyperdrive
+  #   network_switch: External
+  #   role: member
 
-  - name: dc22
-    cpu: 2
-    memory: 4096MB
-    diskpath: c:\vhdx\dc22.vhdx
-    unattend: install2022.xml
-    vmhost: hyperdrive
-    network_switch: External
-    role: member
+  # - name: dc22
+  #   cpu: 2
+  #   memory: 4096MB
+  #   diskpath: c:\vhdx\dc22.vhdx
+  #   unattend: install2022.xml
+  #   vmhost: hyperdrive
+  #   network_switch: External
+  #   role: member
 
-  - name: dc23
-    cpu: 2
-    memory: 4096MB
-    diskpath: c:\vhdx\dc23.vhdx
-    unattend: install2022.xml
-    vmhost: hyperdrive
-    network_switch: External
-    role: member
+  # - name: dc23
+  #   cpu: 2
+  #   memory: 4096MB
+  #   diskpath: c:\vhdx\dc23.vhdx
+  #   unattend: install2022.xml
+  #   vmhost: hyperdrive
+  #   network_switch: External
+  #   role: member
 
   - name: ca03
     cpu: 2
@@ -71,3 +71,21 @@ vms:
     vmhost: hyperdrive
     network_switch: External
     role: member
+
+  - name: web01
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\web01.vhdx
+    unattend: install2022.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: webserver
+
+  - name: web02
+    cpu: 2
+    memory: 4096MB
+    diskpath: c:\vhdx\web02.vhdx
+    unattend: install2022.xml
+    vmhost: hyperdrive
+    network_switch: External
+    role: webserver

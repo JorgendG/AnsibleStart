@@ -6,6 +6,7 @@ pki:
   ca03:
     CACommonName: Homelab Issuing CA3
     CADistinguishedNameSuffix: 'DC=homelabdc22,DC=local'
+    CADistinguishedNameSuffixConfig: 'CN=Configuration,DC=homelabdc22,DC=local'
     CRLPublicationURLs: '65:C:\Windows\system32\CertSrv\CertEnroll\%3%8%9.crl\n79:ldap:///CN=%7%8,CN=%2,CN=CDP,CN=Public Key Services,CN=Services,%6%10\n6:http://ca03.homelabdc22.local/CertEnroll/%3%8%9.crl'
     CACertPublicationURLs:     '1:C:\Windows\system32\CertSrv\CertEnroll\%1_%3%4.crt\n2:ldap:///CN=%7,CN=AIA,CN=Public Key Services,CN=Services,%6%11\n2:http://pki.homelabdc22.local/CertEnroll/%1_%3%4.crt'
     OutputCertRequestFile:     'c:\windows\system32\certsrv\certenroll\ca03.req'

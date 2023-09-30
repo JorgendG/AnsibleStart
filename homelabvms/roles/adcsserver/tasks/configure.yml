@@ -9,6 +9,11 @@
     src: CAPolicy.inf
     dest: C:\Windows\CAPolicy.inf
 
+- name: Check if req file is downloaded yet
+  win_stat:
+    path: "{{pki.ca03.OutputCertRequestFile}}"
+  register: reqfile
+
 - name: Configure CA
   win_dsc:
     resource_name: ADCSCertificationAuthority
@@ -19,8 +24,9 @@
     CAType: 'EnterpriseSubordinateCA'
     CACommonName:              "{{pki.ca03.CACommonName}}"
     CADistinguishedNameSuffix: "{{pki.ca03.CADistinguishedNameSuffix}}"
-    OverwriteExistingCAinDS:   True
-    OutputCertRequestFile:     'c:\windows\system32\certsrv\certenroll\ca03.req'
+    OverwriteExistingCAinDS:   'Yes'
+    OutputCertRequestFile:     "{{pki.ca03.OutputCertRequestFile}}"
+  when: reqfile.stat.exists == false
 
 - name: Configure WebEnrollment
   win_dsc:
@@ -67,6 +73,7 @@
         reqfile: "{{pki.ca03.OutputCertRequestFile}}"
         crtfile: "{{pki.ca03.OutputCertFile}}"
         CACommonName: "{{pki.RootCACommonName}}"
+        action: 'submit'
       delegate_to: rootca
       when: crtfile.stat.exists == false
 
@@ -75,9 +82,47 @@
         src: "{{pki.ca03.OutputCertFile}}"
       register: crtfilecontents
       delegate_to: rootca
+      when: crtfile.stat.exists == false
       
     - name: Create crt file
       win_copy:
         dest: "{{pki.ca03.OutputCertFile}}"
         content: "{{ crtfilecontents['content'] | b64decode }}"
+      when: crtfile.stat.exists == false
       
+    - name: Install cert
+      win_pki_submitreq:
+        crtfile: "{{pki.ca03.OutputCertFile}}"
+        action: 'install'
+      register: installcrt
+
+    - debug: var=installcrt
+    
+    - name: Config CA CADistinguishedNameSuffix
+      win_pki_submitreq:
+        careg: 'DSConfigDN'
+        caregvalue: "{{pki.ca03.CADistinguishedNameSuffixConfig}}"
+        action: 'reg'
+    
+    - name: Config CA
+      win_pki_submitreq:
+        careg: 'DSDomainDN'
+        caregvalue: "{{pki.ca03.CADistinguishedNameSuffix}}"
+        action: 'reg'
+
+    - name: Config CA
+      win_pki_submitreq:
+        careg: 'CRLPublicationURLs'
+        caregvalue: "{{pki.ca03.CRLPublicationURLs}}"
+        action: 'reg'
+
+    - name: Config CA
+      win_pki_submitreq:
+        careg: 'CACertPublicationURLs'
+        caregvalue: "{{pki.ca03.CACertPublicationURLs}}"
+        action: 'reg'
+
+    - name: Restart CertSvc service
+      ansible.windows.win_service:
+        name: CertSvc
+        state: restarted
