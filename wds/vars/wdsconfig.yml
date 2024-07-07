@@ -6,6 +6,13 @@ images:
     GroupName: ''
     Unattendfile: '' 
 
+  - name: Server2025
+    source: '\\hyperdrive\public\wim\install2025.wim'
+    dest: 'c:\wdsimages\install2025.wim'
+    ImageName: 'Windows Server 2025 SERVERSTANDARD'
+    GroupName: 'Windows Server 2025'
+    Unattendfile: 'install2025.xml'
+
   - name: Server2022
     source: '\\hyperdrive\public\wim\install2022.wim'
     dest: 'c:\wdsimages\install2022.wim'
@@ -35,9 +42,9 @@ images:
     Unattendfile: 'installwin10.xml'
 
   - name: Windows11
-    source: '\\hyperdrive\public\wim\installw11.wim'
-    dest: 'c:\wdsimages\installw11.wim'
-    ImageName: 'Windows 10 Enterprise'
+    source: '\\hyperdrive\public\wim\installw11_23h2.wim'
+    dest: 'c:\wdsimages\installw11_23h2.wim'
+    ImageName: 'Windows 11 Pro'
     GroupName: 'Windows 11'
     Unattendfile: 'installwin11.xml'
 
