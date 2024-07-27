@@ -1,0 +1,364 @@
+---
+- hosts: citrix_adc
+  gather_facts: false
+  connection: local
+  collections:
+    - netscaler.adc
+  vars_files:
+    - vars/nitroparams.yaml
+  vars:
+    nitro_nsip: "192.168.1.32"
+
+  tasks:
+    - name: SkipBlock
+      block:
+        - name: Enable default SSL Profile
+          delegate_to: localhost
+          netscaler.adc.sslparameter:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            defaultprofile: ENABLED
+
+        - name: Create DH key
+          netscaler.adc.ssldhparam:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            state: created
+            gen: 5
+            bits: 2048
+            dhfile: /nsconfig/ssl/dh2048.pem
+
+        - name: Create SSL Frontend Profile
+          netscaler.adc.sslprofile:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            name: homelab_ssl_profile_frontend
+            dhcount: 1000
+            dh: ENABLED
+            dhfile: /nsconfig/ssl/dh2048.pem
+            sslprofiletype: FrontEnd
+            ersa: DISABLED
+            sessreuse: ENABLED
+            sesstimeout: 120
+            tls1: DISABLED
+            tls11: DISABLED
+            tls13: ENABLED
+            denysslreneg: NONSECURE
+            hsts: ENABLED
+            maxage: 15552000
+            #includesubdomains: "YES"
+            #preload: YES
+
+        - name: Bind ACC Curves Backend
+          netscaler.adc.sslprofile_ecccurve_binding:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            name: homelab_ssl_profile_backend
+            ecccurvename: "{{item}}"
+          with_items:
+            - "P_256"
+            - "P_384"
+            - "P_224"
+            - "P_521"
+
+        - name: Bind Ciphers Backend
+          netscaler.adc.sslprofile_sslcipher_binding:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            name: homelab_ssl_profile_backend
+            ciphername: "{{item.ciphername}}"
+            cipherpriority: "{{item.cipherPriority}}"
+          with_items:
+            - { ciphername: "SECURE", cipherPriority: 2 }
+
+        - name: Unbind default Ciphers
+          netscaler.adc.sslprofile_sslcipher_binding:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            name: homelab_ssl_profile_backend
+            ciphername: DEFAULT_BACKEND
+            state: absent
+
+        - name: Bind ACC Curves FrontEnd
+          netscaler.adc.sslprofile_ecccurve_binding:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            name: homelab_ssl_profile_frontend
+            ecccurvename: "{{item}}"
+          with_items:
+            - "P_256"
+            - "P_384"
+            - "P_224"
+            - "P_521"
+
+        - name: Bind Ciphers Frontend
+          netscaler.adc.sslprofile_sslcipher_binding:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            name: homelab_ssl_profile_frontend
+            ciphername: "{{item.ciphername}}"
+            cipherpriority: "{{item.cipherPriority}}"
+          with_items:
+            - { ciphername: "TLSv1.3", cipherPriority: 1 }
+            - { ciphername: "SECURE", cipherPriority: 2 }
+            - {
+                ciphername: "TLS1.2-DHE-RSA-AES256-GCM-SHA384",
+                cipherPriority: 3,
+              }
+            - {
+                ciphername: "TLS1.2-DHE-RSA-AES128-GCM-SHA256",
+                cipherPriority: 4,
+              }
+
+        - name: Unbind default Ciphers FrontEnd
+          netscaler.adc.sslprofile_sslcipher_binding:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            name: homelab_ssl_profile_frontend
+            ciphername: DEFAULT
+            state: absent
+
+        - name: Set modes
+          netscaler.adc.nsmode:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            mode: "{{item}}"
+            state: enabled
+          with_items:
+            - "FR"
+            - "L3"
+            - "Edge"
+            - "USNIP"
+            - "PMTUD"
+
+        - name: Set modfeature
+          netscaler.adc.nsfeature:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            feature: "{{item}}"
+            state: enabled
+          with_items:
+            - "WL"
+            - "LB"
+            - "SSL"
+            - "AppFlow"
+            - "CH"
+
+        - name: Secure Management
+          netscaler.adc.nsip:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            gui: SECUREONLY
+            ipaddress: "{{ nitro_nsip }}"
+
+        - name: Create SNIP
+          netscaler.adc.nsip:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            type: SNIP
+            ipaddress: "{{ item.ipaddress }}"
+            netmask: "{{ item.netmask }}"
+          with_items:
+            - { ipaddress: "192.168.1.33", netmask: "255.255.255.0" }
+
+        - name: Set Hostname
+          netscaler.adc.nshostname:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            hostname: NS32
+
+        - name: Set timezone
+          netscaler.adc.nsparam:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            timezone: "GMT+02:00-CEST-Europe/Amsterdam"
+
+        - name: Set NTP server
+          netscaler.adc.ntpserver:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            serverip: "192.168.1.1"
+
+        - name: Configure DNS
+          delegate_to: localhost
+          netscaler.adc.dnsnameserver:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            ip: "192.168.1.1"
+
+        - name: Copy NS32 certfile to netscaler
+          delegate_to: localhost
+          netscaler.adc.systemfile:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            state: present
+            filecontent: "{{ lookup('file', './files/ns32.cer') | b64encode }}"
+            filelocation: /var/tmp/
+            filename: ns32.cer
+
+        - name: Import NS32 sslcertfile
+          delegate_to: localhost
+          netscaler.adc.sslcertfile:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            state: imported
+            name: ns32.cer
+            src: local:ns32.cer # `local:` means `/var/tmp/` in netscaler
+
+        - name: Copy NS32 keyfile to netscaler
+          delegate_to: localhost
+          netscaler.adc.systemfile:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            state: present
+            filecontent: "{{ lookup('file', './files/ns32.key') | b64encode }}"
+            filelocation: /var/tmp/
+            filename: ns32.key
+
+        - name: Import NS32 sslkeyfile
+          delegate_to: localhost
+          netscaler.adc.sslkeyfile:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            state: imported
+            name: ns32.key
+
+            src: local:ns32.key # `local:` means `/var/tmp/` in netscaler
+
+        - name: Create NS32 certkey pair
+          delegate_to: localhost
+          netscaler.adc.sslcertkey:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            certkey: ns32.homelabdc22.local
+            cert: ns32.cer
+            key: ns32.key
+
+        - name: Bind certkey to gui
+          delegate_to: localhost
+          netscaler.adc.sslservice_sslcertkey_binding:
+            nsip: "{{ nitro_nsip }}"
+            nitro_user: "{{ nitro_user }}"
+            nitro_pass: "{{ nitro_pass }}"
+            nitro_protocol: https
+            validate_certs: no
+
+            certkeyname: ns32.homelabdc22.local
+            servicename: nshttps-127.0.0.1-443
+
+      when: 1==0
+
+    - name: Import CA Certificate
+      delegate_to: localhost
+      netscaler.adc.sslcertfile:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        state: imported
+        name: homelab_issuing_CA.crt
+        src: http://pki.homelabdc22.local/certenroll/CA02_Homelab_Issuing_CA.crt
+        #src: local:homelab_issuing_CA.cer # `local:` means `/var/tmp/` in netscaler
+
+    - name: Create CA Certificate pair
+      delegate_to: localhost
+      netscaler.adc.sslcertkey:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        certkey: homelab_issuing_CA
+        cert: homelab_issuing_CA.crt
+        expirymonitor: DISABLED

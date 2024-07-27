@@ -1,0 +1,12 @@
+vms:
+  - name: answin01
+    memory: 8192
+    cores: 2
+    storage: 'local-lvm'
+  - name: answin02
+    memory: 8192
+    cores: 2
+    storage: 'local-lvm'
+
+
+node: 'pve'

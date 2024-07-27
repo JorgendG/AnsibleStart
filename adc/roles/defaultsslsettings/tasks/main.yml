@@ -1,0 +1,152 @@
+---
+- name: Enable default SSL Profile
+  netscaler.adc.sslparameter:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    defaultprofile: ENABLED
+
+- name: Create DH key
+  netscaler.adc.ssldhparam:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    state: created
+    gen: 5
+    bits: 2048
+    dhfile: /nsconfig/ssl/dh2048.pem
+
+- name: Create SSL Backend Profile
+  netscaler.adc.sslprofile:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_backend
+    sslprofiletype: BackEnd
+    ersa: DISABLED
+    sessreuse: ENABLED
+    sesstimeout: 300
+    tls1: DISABLED
+    tls11: DISABLED
+    denysslreneg: NONSECURE
+
+- name: Bind ACC Curves Backend
+  netscaler.adc.sslprofile_ecccurve_binding:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_backend
+    ecccurvename: "{{item}}"
+  with_items:
+    - "P_256"
+    - "P_384"
+    - "P_224"
+    - "P_521"
+
+- name: Bind Ciphers Backend
+  netscaler.adc.sslprofile_sslcipher_binding:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_backend
+    ciphername: "{{item.ciphername}}"
+    cipherpriority: "{{item.cipherPriority}}"
+  with_items:
+    - { ciphername: "SECURE", cipherPriority: 2 }
+
+- name: Unbind default Ciphers
+  netscaler.adc.sslprofile_sslcipher_binding:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_backend
+    ciphername: DEFAULT_BACKEND
+    state: absent
+
+- name: Create SSL Frontend Profile
+  netscaler.adc.sslprofile:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_frontend
+    dhcount: 1000
+    dh: ENABLED
+    dhfile: /nsconfig/ssl/dh2048.pem
+    sslprofiletype: FrontEnd
+    ersa: DISABLED
+    sessreuse: ENABLED
+    sesstimeout: 120
+    tls1: DISABLED
+    tls11: DISABLED
+    tls13: ENABLED
+    denysslreneg: NONSECURE
+    hsts: ENABLED
+    maxage: 15552000
+    #includesubdomains: "YES"
+    #preload: YES
+
+- name: Bind ACC Curves FrontEnd
+  netscaler.adc.sslprofile_ecccurve_binding:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_frontend
+    ecccurvename: "{{item}}"
+  with_items:
+    - "P_256"
+    - "P_384"
+    - "P_224"
+    - "P_521"
+
+- name: Bind Ciphers Frontend
+  netscaler.adc.sslprofile_sslcipher_binding:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_frontend
+    ciphername: "{{item.ciphername}}"
+    cipherpriority: "{{item.cipherPriority}}"
+  with_items:
+    - { ciphername: "TLSv1.3", cipherPriority: 1 }
+    - { ciphername: "SECURE", cipherPriority: 2 }
+    - { ciphername: "TLS1.2-DHE-RSA-AES256-GCM-SHA384", cipherPriority: 3 }
+    - { ciphername: "TLS1.2-DHE-RSA-AES128-GCM-SHA256", cipherPriority: 4 }
+
+- name: Unbind default Ciphers FrontEnd
+  netscaler.adc.sslprofile_sslcipher_binding:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    name: homelab_ssl_profile_frontend
+    ciphername: DEFAULT
+    state: absent

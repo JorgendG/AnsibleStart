@@ -1,0 +1,66 @@
+---
+- name: List VMs
+  hosts:
+    - proxmox
+  vars_files:
+    - vms.yml
+  gather_facts: no
+  tasks:
+    - name: List all existing virtual machines on all nodes
+      community.general.proxmox_vm_info:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        type: qemu
+        node: "{{ node }}"
+        config: current
+      delegate_to: 127.0.0.1
+
+    - name: Create new VM with one network interface, three virto hard disk, 2 cores, and 1 vcpu
+      community.general.proxmox_kvm:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        name: "{{ item.name }}"
+        node: "{{ node }}"
+        bios: ovmf
+        memory: "{{ item.memory }}"
+        machine: "pc-q35-8.1"
+        net:
+          net0: "virtio,bridge=vmbr0"
+        scsihw: "virtio-scsi-single"
+        scsi:
+          scsi0: "{{ item.storage }}:127"
+        tpmstate0:
+          storage: "{{ item.storage }}"
+        efidisk0:
+          storage: "{{ item.storage }}"
+          efitype: "4m"
+          pre_enrolled_keys: true
+          format: raw
+
+        cores: "{{ item.cores }}"
+      delegate_to: 127.0.0.1
+      with_items: "{{vms}}"
+      register: createvm
+
+    - debug:
+        var: "{{ createvm }}"
+      #with_items: "{{ createvm }}"
+
+    - debug:
+        var: "{{ item }}"
+      with_items: "{{ createvm }}"
+
+    - name: Start VM
+      community.general.proxmox_kvm:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        name: "{{ item.name }}"
+        node: "{{ node }}"
+        state: started
+      with_items: "{{ createvm }}"

@@ -1,0 +1,31 @@
+---
+- name: Set timezone
+  netscaler.adc.nsparam:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    timezone: "GMT+02:00-CEST-Europe/Amsterdam"
+
+- name: Set NTP server
+  netscaler.adc.ntpserver:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    serverip: "192.168.1.1"
+
+- name: Configure DNS
+  delegate_to: localhost
+  netscaler.adc.dnsnameserver:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    ip: "192.168.1.1"

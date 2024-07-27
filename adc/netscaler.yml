@@ -1,0 +1,230 @@
+---
+- hosts: citrix_adc
+  gather_facts: false
+  connection: local
+  collections:
+    - netscaler.adc
+  vars_files:
+    - vars/nitroparams.yaml
+  roles:
+    # - defaultsslsettings
+    # - rolesfeatures
+    # - basicsettings
+
+  tasks:
+    - name: Get Hostname
+      netscaler.adc.nshostname:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        hostname: NS33
+      check_mode: yes
+
+    - name: Set Hostname
+      netscaler.adc.nshostname:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        hostname: NS32
+
+    - name: Create SNIP
+      netscaler.adc.nsip:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        type: SNIP
+        ipaddress: "{{ item.ipaddress }}"
+        netmask: "{{ item.netmask }}"
+      with_items:
+        - { ipaddress: "192.168.1.33", netmask: "255.255.255.0" }
+        - { ipaddress: "192.168.5.33", netmask: "255.255.255.0" }
+        - { ipaddress: "192.168.10.33", netmask: "255.255.255.0" }
+
+    - name: Create VLAN
+      netscaler.adc.vlan:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        id: "{{ item.id }}"
+        aliasname: "{{ item.aliasname }}"
+        vlan_interface_binding:
+          binding_members:
+            - id: "{{ item.id }}"
+              ifnum: "{{ item.ifnum }}"
+              tagged: yes
+        vlan_nsip_binding:
+          binding_members:
+            - id: "{{ item.id }}"
+              ipaddress: "{{ item.ipaddress }}"
+              netmask: "{{ item.netmask }}"
+      with_items:
+        - {
+            id: 5,
+            aliasname: "vlan5",
+            ifnum: "0/1",
+            ipaddress: "192.168.5.32",
+            netmask: "255.255.255.0",
+          }
+        - {
+            id: 10,
+            aliasname: "dmz",
+            ifnum: "0/1",
+            ipaddress: "192.168.10.32",
+            netmask: "255.255.255.0",
+          }
+
+    - name: Create server docker-ubuntu
+      netscaler.adc.server:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: http
+        validate_certs: no
+
+        state: present
+
+        name: docker-ubuntu.homelabdc22.local
+        ipaddress: 192.168.1.141
+
+    - name: Setup servicegroups
+      netscaler.adc.servicegroup:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: http
+        validate_certs: no
+
+        servicegroupname: sg_mediawiki.homelabdc22.local
+        servicetype: HTTP
+        healthmonitor: "YES"
+        servicegroup_servicegroupmember_binding:
+          binding_members:
+            - servername: docker-ubuntu.homelabdc22.local
+              port: 8090
+              servicegroupname: sg_mediawiki.homelabdc22.local
+
+    - name: Sample Task | lbvserver with bindings
+      netscaler.adc.lbvserver:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: http
+        validate_certs: no
+
+        state: present
+        name: vslb_mediawiki.homelabdc22.local
+        servicetype: HTTP
+        ipv46: 192.168.10.20
+        port: 80
+        lbmethod: LEASTCONNECTION
+        lbvserver_servicegroup_binding:
+          # mode: desired # bind | unbind | desired
+          binding_members:
+            - name: vslb_mediawiki.homelabdc22.local
+              servicename: sg_mediawiki.homelabdc22.local
+
+    - name: Import CA Certificate
+      delegate_to: localhost
+      netscaler.adc.sslcertfile:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        state: imported
+        name: homelab_issuing_CA.crt
+        src: http://pki.homelabdc22.local/certenroll/CA02_Homelab_Issuing_CA.crt
+
+    - name: Copy NS32 certfile to netscaler
+      delegate_to: localhost
+      netscaler.adc.systemfile:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        state: present
+        filecontent: "{{ lookup('file', './files/ns32.cer') | b64encode }}"
+        filelocation: /var/tmp/
+        filename: ns32.cer
+
+    - name: Import NS32 sslcertfile
+      delegate_to: localhost
+      netscaler.adc.sslcertfile:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        state: imported
+        name: ns32.cer
+        src: local:ns32.cer # `local:` means `/var/tmp/` in netscaler
+
+    - name: Copy NS32 keyfile to netscaler
+      delegate_to: localhost
+      netscaler.adc.systemfile:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        state: present
+        filecontent: "{{ lookup('file', './files/ns32.key') | b64encode }}"
+        filelocation: /var/tmp/
+        filename: ns32.key
+
+    - name: Import NS32 sslkeyfile
+      delegate_to: localhost
+      netscaler.adc.sslkeyfile:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        state: imported
+        name: ns32.key
+
+        src: local:ns32.key # `local:` means `/var/tmp/` in netscaler
+
+    - name: Create NS32 certkey pair
+      delegate_to: localhost
+      netscaler.adc.sslcertkey:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        certkey: ns32.homelabdc22.local
+        cert: ns32.cer
+        key: ns32.key
+        linkcertkeyname: homelab_issuing_CA
+
+    - name: Bind certkey to gui
+      delegate_to: localhost
+      netscaler.adc.sslservice_sslcertkey_binding:
+        nsip: "{{ nitro_nsip }}"
+        nitro_user: "{{ nitro_user }}"
+        nitro_pass: "{{ nitro_pass }}"
+        nitro_protocol: https
+        validate_certs: no
+
+        certkeyname: ns32.homelabdc22.local
+        servicename: nshttps-127.0.0.1-443
