@@ -1,3 +1,1 @@
----
- # From Ansible Galaxy, latest version.
- - src: netscaler.adc
+- name: netscaler.adc
