@@ -1,1 +1,3 @@
-- name: netscaler.adc
+---
+collections:
+  - name: netscaler.adc
