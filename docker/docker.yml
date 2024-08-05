@@ -1,0 +1,13 @@
+---
+- name: List VMs
+  hosts:
+    - dockerhost
+  gather_facts: no
+  tasks:
+    - name: Pull an image
+      community.docker.docker_image:
+        name: gitlab/gitlab-ce:latest
+        source: pull
+        # Select platform for pulling. If not specified, will pull whatever docker prefers.
+        pull:
+          platform: amd64

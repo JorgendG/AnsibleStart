@@ -1,0 +1,141 @@
+---
+- name: Create server docker-ubuntu
+  netscaler.adc.server:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: http
+    validate_certs: no
+
+    state: present
+
+    name: docker-ubuntu.homelabdc22.local
+    ipaddress: 192.168.1.141
+
+- name: Copy gitlabs certfile to netscaler
+  delegate_to: localhost
+  netscaler.adc.systemfile:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    state: present
+    filecontent: "{{ lookup('file', './files/gitlabs.homelabdc22.local-20260728.cer') | b64encode }}"
+    filelocation: /var/tmp/
+    filename: gitlabs.homelabdc22.local.cer
+
+- name: Import gitlabs sslcertfile
+  delegate_to: localhost
+  netscaler.adc.sslcertfile:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    state: imported
+    name: gitlabs.homelabdc22.local.cer
+    src: local:gitlabs.homelabdc22.local.cer # `local:` means `/var/tmp/` in netscaler
+
+- name: Copy gitlabs keyfile to netscaler
+  delegate_to: localhost
+  netscaler.adc.systemfile:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    state: present
+    filecontent: "{{ lookup('file', './files/gitlabs.homelabdc22.local-20260728.key') | b64encode }}"
+    filelocation: /var/tmp/
+    filename: gitlabs.homelabdc22.local.key
+
+- name: Import gitlabs sslkeyfile
+  delegate_to: localhost
+  netscaler.adc.sslkeyfile:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    state: imported
+    name: gitlabs.homelabdc22.local.key
+
+    src: local:gitlabs.homelabdc22.local.key # `local:` means `/var/tmp/` in netscaler
+
+- name: Create gitlabs certkey pair
+  delegate_to: localhost
+  netscaler.adc.sslcertkey:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: https
+    validate_certs: no
+
+    certkey: gitlabs.homelabdc22.local
+    cert: gitlabs.homelabdc22.local.cer
+    key: gitlabs.homelabdc22.local.key
+    linkcertkeyname: homelab_issuing_CA
+
+- name: Setup servicegroups gitlab
+  netscaler.adc.servicegroup:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: http
+    validate_certs: no
+
+    servicegroupname: sg_gitlabs.homelabdc22.local
+    servicetype: HTTP
+    healthmonitor: "YES"
+    servicegroup_servicegroupmember_binding:
+      binding_members:
+        - servername: docker-ubuntu.homelabdc22.local
+          port: 49155
+          servicegroupname: sg_gitlabs.homelabdc22.local
+
+
+
+- name: Create loadbalancer gitlabs
+  netscaler.adc.lbvserver:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: http
+    validate_certs: no
+
+    state: present
+    name: vslb_gitlabs.homelabdc22.local
+    servicetype: SSL
+    ipv46: 192.168.5.85
+    port: 443
+    lbmethod: LEASTCONNECTION
+    lbvserver_servicegroup_binding:
+      # mode: desired # bind | unbind | desired
+      binding_members:
+        - name: vslb_gitlabs.homelabdc22.local
+          servicename: sg_gitlabs.homelabdc22.local
+
+- name: Create loadbalancer gitlabs http
+  netscaler.adc.lbvserver:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: http
+    validate_certs: no
+
+    state: present
+    name: vslb_gitlabs.homelabdc22.local_http
+    servicetype: HTTP
+    ipv46: 192.168.5.85
+    port: 80
+    lbmethod: LEASTCONNECTION
+    lbvserver_servicegroup_binding:
+      # mode: desired # bind | unbind | desired
+      binding_members:
+        - name: vslb_gitlabs.homelabdc22.local_http
+          servicename: sg_gitlabs.homelabdc22.local

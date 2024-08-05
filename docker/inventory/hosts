@@ -1,0 +1,2 @@
+[dockerhosts]
+dockerhost ansible_connection=ssh ansible_user=jur

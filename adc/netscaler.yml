@@ -12,17 +12,6 @@
     # - basicsettings
 
   tasks:
-    - name: Get Hostname
-      netscaler.adc.nshostname:
-        nsip: "{{ nitro_nsip }}"
-        nitro_user: "{{ nitro_user }}"
-        nitro_pass: "{{ nitro_pass }}"
-        nitro_protocol: https
-        validate_certs: no
-
-        hostname: NS33
-      check_mode: yes
-
     - name: Set Hostname
       netscaler.adc.nshostname:
         nsip: "{{ nitro_nsip }}"
@@ -85,8 +74,36 @@
             netmask: "255.255.255.0",
           }
 
-    - name: Create server docker-ubuntu
-      netscaler.adc.server:
+    - name: Create mediawiki
+      include_tasks:
+        file: loadbalancers/mediawiki.yml
+
+    - name: Create gitlab
+      include_tasks:
+        file: loadbalancers/gitlab.yml
+
+    # - name: Create loadbalancer gitlabs
+    #   netscaler.adc.lbvserver:
+    #     nsip: "{{ nitro_nsip }}"
+    #     nitro_user: "{{ nitro_user }}"
+    #     nitro_pass: "{{ nitro_pass }}"
+    #     nitro_protocol: http
+    #     validate_certs: no
+
+    #     state: present
+    #     name: vslb_gitlabs.homelabdc22.local
+    #     servicetype: SSL
+    #     ipv46: 192.168.1.85
+    #     port: 443
+    #     lbmethod: LEASTCONNECTION
+    #     lbvserver_servicegroup_binding:
+    #       # mode: desired # bind | unbind | desired
+    #       binding_members:
+    #         - name: vslb_gitlabs.homelabdc22.local
+    #           servicename: sg_gitlabs.homelabdc22.local
+
+    - name: Bind certificate gitlabs
+      netscaler.adc.sslvserver_sslcertkey_binding:
         nsip: "{{ nitro_nsip }}"
         nitro_user: "{{ nitro_user }}"
         nitro_pass: "{{ nitro_pass }}"
@@ -94,46 +111,8 @@
         validate_certs: no
 
         state: present
-
-        name: docker-ubuntu.homelabdc22.local
-        ipaddress: 192.168.1.141
-
-    - name: Setup servicegroups
-      netscaler.adc.servicegroup:
-        nsip: "{{ nitro_nsip }}"
-        nitro_user: "{{ nitro_user }}"
-        nitro_pass: "{{ nitro_pass }}"
-        nitro_protocol: http
-        validate_certs: no
-
-        servicegroupname: sg_mediawiki.homelabdc22.local
-        servicetype: HTTP
-        healthmonitor: "YES"
-        servicegroup_servicegroupmember_binding:
-          binding_members:
-            - servername: docker-ubuntu.homelabdc22.local
-              port: 8090
-              servicegroupname: sg_mediawiki.homelabdc22.local
-
-    - name: Sample Task | lbvserver with bindings
-      netscaler.adc.lbvserver:
-        nsip: "{{ nitro_nsip }}"
-        nitro_user: "{{ nitro_user }}"
-        nitro_pass: "{{ nitro_pass }}"
-        nitro_protocol: http
-        validate_certs: no
-
-        state: present
-        name: vslb_mediawiki.homelabdc22.local
-        servicetype: HTTP
-        ipv46: 192.168.10.20
-        port: 80
-        lbmethod: LEASTCONNECTION
-        lbvserver_servicegroup_binding:
-          # mode: desired # bind | unbind | desired
-          binding_members:
-            - name: vslb_mediawiki.homelabdc22.local
-              servicename: sg_mediawiki.homelabdc22.local
+        vservername: vslb_gitlabs.homelabdc22.local
+        certkeyname: gitlabs.homelabdc22.local
 
     - name: Import CA Certificate
       delegate_to: localhost
