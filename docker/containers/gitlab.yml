@@ -1,0 +1,65 @@
+---
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "~/docker"
+    state: directory
+    mode: "0755"
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "~/docker/gitlab"
+    state: directory
+    mode: "0755"
+
+- name: Create a directory if it does not exist
+  ansible.builtin.copy:
+    dest: "~/docker/gitlab/gitlab-compose.yml"
+    content: |
+      services:
+        web:
+          image: "gitlab/gitlab-ce:latest"
+          restart: always
+          hostname: "localhost"
+          container_name: gitlab-ce
+          environment:
+            GITLAB_OMNIBUS_CONFIG: |
+              external_url 'http://localhost'
+          ports:
+            - "8080:80"
+            - "8443:443"
+          volumes:
+            - "~/docker/gitlab/config:/etc/gitlab"
+            - "~/docker/gitlab/logs:/var/log/gitlab"
+            - "~/docker/gitlab/data:/var/opt/gitlab"
+          networks:
+            - gitlab
+        gitlab-runner:
+          image: gitlab/gitlab-runner:alpine
+          container_name: gitlab-runner
+          restart: always
+          depends_on:
+            - web
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - "~/docker/gitlab/gitlab-runner:/etc/gitlab-runner"
+          networks:
+            - gitlab
+
+      networks:
+        gitlab:
+          name: gitlab-network
+
+- name: Pull an image
+  community.docker.docker_image:
+    name: gitlab/gitlab-ce:latest
+    source: pull
+    # Select platform for pulling. If not specified, will pull whatever docker prefers.
+    pull:
+      platform: amd64
+
+- name: Start gitlab
+  community.docker.docker_compose_v2:
+    project_src: "~/docker/gitlab"
+    files:
+      - gitlab-compose.yml
+  register: gitlaboutpout

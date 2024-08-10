@@ -1,13 +1,13 @@
 ---
-- name: List VMs
+- name: Create containers
   hosts:
     - dockerhost
   gather_facts: no
   tasks:
-    - name: Pull an image
-      community.docker.docker_image:
-        name: gitlab/gitlab-ce:latest
-        source: pull
-        # Select platform for pulling. If not specified, will pull whatever docker prefers.
-        pull:
-          platform: amd64
+    - name: Create gitlab
+      include_tasks:
+        file: containers/gitlab.yml
+
+    - name: Create watchtower
+      include_tasks:
+        file: containers/watchtower.yml

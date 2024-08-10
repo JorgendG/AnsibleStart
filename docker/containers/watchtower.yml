@@ -1,0 +1,39 @@
+---
+- name: Pull an image
+  community.docker.docker_image:
+    name: containrrr/watchtower
+    source: pull
+    # Select platform for pulling. If not specified, will pull whatever docker prefers.
+    pull:
+      platform: amd64
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "~/docker"
+    state: directory
+    mode: "0755"
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "~/docker/watchtower"
+    state: directory
+    mode: "0755"
+
+- name: Create a directory if it does not exist
+  ansible.builtin.copy:
+    dest: "~/docker/watchtower/watchtower-compose.yml"
+    content: |
+      services:
+        watchtower:
+          image: containrrr/watchtower
+          restart: always
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+          command: --interval 3600
+
+- name: Start watchtower
+  community.docker.docker_compose_v2:
+    project_src: "~/docker/watchtower"
+    files:
+      - watchtower-compose.yml
