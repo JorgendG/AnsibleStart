@@ -63,3 +63,13 @@
     files:
       - gitlab-compose.yml
   register: gitlaboutpout
+
+- name: Run a simple command (command)
+  community.docker.docker_container_exec:
+    container: gitlab-ce
+    command: /bin/bash -c "cat /etc/gitlab/initial_root_password"
+  register: result
+
+- name: display multiple file contents
+  ansible.builtin.debug: var=result
+

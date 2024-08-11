@@ -8,6 +8,14 @@
       include_tasks:
         file: containers/gitlab.yml
 
+    - name: Create dockergitlab record
+      community.windows.win_dns_record:
+        name: "dockergitlab"
+        type: "A"
+        value: "192.168.10.80"
+        zone: "homelabdc22.local"
+      delegate_to: dc22
+
     - name: Create watchtower
       include_tasks:
         file: containers/watchtower.yml

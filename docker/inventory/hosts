@@ -1,2 +1,5 @@
 [dockerhosts]
 dockerhost ansible_connection=ssh ansible_user=jur
+
+[dnsservers]
+dc22 ansible_host=dc22.homelabdc22.local
