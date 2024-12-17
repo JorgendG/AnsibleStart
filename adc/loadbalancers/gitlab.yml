@@ -1,5 +1,5 @@
 ---
-- name: Create server docker-ubuntu
+- name: Create server dockerhost
   netscaler.adc.server:
     nsip: "{{ nitro_nsip }}"
     nitro_user: "{{ nitro_user }}"
@@ -8,23 +8,8 @@
     validate_certs: no
 
     state: present
-
-    name: docker-ubuntu.homelabdc22.local
-    ipaddress: 192.168.1.141
-
-- name: Copy gitlabs certfile to netscaler
-  delegate_to: localhost
-  netscaler.adc.systemfile:
-    nsip: "{{ nitro_nsip }}"
-    nitro_user: "{{ nitro_user }}"
-    nitro_pass: "{{ nitro_pass }}"
-    nitro_protocol: https
-    validate_certs: no
-
-    state: present
-    filecontent: "{{ lookup('file', './files/gitlabs.homelabdc22.local-20260728.cer') | b64encode }}"
-    filelocation: /var/tmp/
-    filename: gitlabs.homelabdc22.local.cer
+    name: dockerhost.homelabdc22.local
+    ipaddress: 192.168.5.10
 
 - name: Import gitlabs sslcertfile
   delegate_to: localhost
@@ -37,21 +22,7 @@
 
     state: imported
     name: gitlabs.homelabdc22.local.cer
-    src: local:gitlabs.homelabdc22.local.cer # `local:` means `/var/tmp/` in netscaler
-
-- name: Copy gitlabs keyfile to netscaler
-  delegate_to: localhost
-  netscaler.adc.systemfile:
-    nsip: "{{ nitro_nsip }}"
-    nitro_user: "{{ nitro_user }}"
-    nitro_pass: "{{ nitro_pass }}"
-    nitro_protocol: https
-    validate_certs: no
-
-    state: present
-    filecontent: "{{ lookup('file', './files/gitlabs.homelabdc22.local-20260728.key') | b64encode }}"
-    filelocation: /var/tmp/
-    filename: gitlabs.homelabdc22.local.key
+    src: http://pki.homelabdc22.local/certstore/gitlabs.homelabdc22.local-20260728.cer
 
 - name: Import gitlabs sslkeyfile
   delegate_to: localhost
@@ -64,8 +35,7 @@
 
     state: imported
     name: gitlabs.homelabdc22.local.key
-
-    src: local:gitlabs.homelabdc22.local.key # `local:` means `/var/tmp/` in netscaler
+    src: http://pki.homelabdc22.local/certstore/gitlabs.homelabdc22.local-20260728.key
 
 - name: Create gitlabs certkey pair
   delegate_to: localhost
@@ -90,14 +60,30 @@
     validate_certs: no
 
     servicegroupname: sg_gitlabs.homelabdc22.local
-    servicetype: HTTP
+    servicetype: SSL
     healthmonitor: "YES"
     servicegroup_servicegroupmember_binding:
       binding_members:
-        - servername: docker-ubuntu.homelabdc22.local
-          port: 49155
+        - servername: dockerhost.homelabdc22.local
+          port: 8443
           servicegroupname: sg_gitlabs.homelabdc22.local
 
+- name: Setup servicegroups gitlab http
+  netscaler.adc.servicegroup:
+    nsip: "{{ nitro_nsip }}"
+    nitro_user: "{{ nitro_user }}"
+    nitro_pass: "{{ nitro_pass }}"
+    nitro_protocol: http
+    validate_certs: no
+
+    servicegroupname: sg_gitlabs.homelabdc22.local_80
+    servicetype: SSL
+    healthmonitor: "YES"
+    servicegroup_servicegroupmember_binding:
+      binding_members:
+        - servername: dockerhost.homelabdc22.local
+          port: 8080
+          servicegroupname: sg_gitlabs.homelabdc22.local_80
 
 
 - name: Create loadbalancer gitlabs
@@ -115,10 +101,9 @@
     port: 443
     lbmethod: LEASTCONNECTION
     lbvserver_servicegroup_binding:
-      # mode: desired # bind | unbind | desired
       binding_members:
         - name: vslb_gitlabs.homelabdc22.local
-          servicename: sg_gitlabs.homelabdc22.local
+          servicename: sg_gitlabs.homelabdc22.local_80
 
 - name: Create loadbalancer gitlabs http
   netscaler.adc.lbvserver:
@@ -129,13 +114,12 @@
     validate_certs: no
 
     state: present
-    name: vslb_gitlabs.homelabdc22.local_http
+    name: vslb_gitlabs.homelabdc22.local_80
     servicetype: HTTP
     ipv46: 192.168.5.85
     port: 80
     lbmethod: LEASTCONNECTION
     lbvserver_servicegroup_binding:
-      # mode: desired # bind | unbind | desired
       binding_members:
-        - name: vslb_gitlabs.homelabdc22.local_http
-          servicename: sg_gitlabs.homelabdc22.local
+        - name: vslb_gitlabs.homelabdc22.local_80
+          servicename: sg_gitlabs.homelabdc22.local_80
