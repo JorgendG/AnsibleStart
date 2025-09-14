@@ -40,19 +40,15 @@
           efitype: "4m"
           pre_enrolled_keys: true
           format: raw
-
         cores: "{{ item.cores }}"
       delegate_to: 127.0.0.1
       with_items: "{{vms}}"
       register: createvm
 
     - debug:
-        var: "{{ createvm }}"
-      #with_items: "{{ createvm }}"
-
-    - debug:
         var: "{{ item }}"
-      with_items: "{{ createvm }}"
+      with_items: "{{ hostvars[inventory_hostname]['createvm']['results'] }}"
+      when: item.changed == true
 
     - name: Start VM
       community.general.proxmox_kvm:
@@ -63,4 +59,5 @@
         name: "{{ item.name }}"
         node: "{{ node }}"
         state: started
-      with_items: "{{ createvm }}"
+      with_items: "{{ hostvars[inventory_hostname]['createvm']['results'] }}"
+      when: item.changed == true

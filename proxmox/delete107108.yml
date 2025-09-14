@@ -1,0 +1,27 @@
+---
+- name: List VMs
+  hosts:
+    - proxmox
+  vars_files:
+    - vms.yml
+  gather_facts: no
+  tasks:
+    - name: Delete 107
+      community.general.proxmox_kvm:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        vmid: 107
+        state: absent
+      delegate_to: 127.0.0.1
+
+    - name: Delete 108
+      community.general.proxmox_kvm:
+        api_host: "{{ api_host }}"
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        vmid: 108
+        state: absent
+      delegate_to: 127.0.0.1
